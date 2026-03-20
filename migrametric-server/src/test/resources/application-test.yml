@@ -1,0 +1,52 @@
+# 测试环境配置
+spring:
+  config:
+    activate:
+      on-profile: test
+
+  application:
+    name: migrametric-server-test
+
+  # H2内存数据库
+  datasource:
+    driver-class-name: org.h2.Driver
+    url: jdbc:h2:mem:testdb;MODE=MySQL;DB_CLOSE_DELAY=-1;DB_CLOSE_ON_EXIT=FALSE
+    username: sa
+    password:
+
+  # H2控制台（调试用）
+  h2:
+    console:
+      enabled: true
+      path: /h2-console
+
+  # JPA/Hibernate配置
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# MyBatis-Plus配置
+mybatis-plus:
+  mapper-locations: classpath*:/mapper/**/*.xml
+  type-aliases-package: com.migrametric.entity
+  global-config:
+    db-config:
+      id-type: auto
+  configuration:
+    map-underscore-to-camel-case: true
+
+# JWT配置
+jwt:
+  secret: TestSecretKeyForUnitTestingPurposesOnly123456
+  expire-time: 3600000
+  refresh-expire-time: 86400000
+
+# 日志配置
+logging:
+  level:
+    root: WARN
+    com.migrametric: DEBUG

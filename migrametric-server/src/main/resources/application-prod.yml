@@ -1,0 +1,28 @@
+# 生产环境配置
+spring:
+  config:
+    activate:
+      on-profile: prod
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://${DB_HOST:localhost}:${DB_PORT:3306}/migrametric?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=true&requireSSL=true
+    username: ${DB_USERNAME:root}
+    password: ${DB_PASSWORD:}
+    hikari:
+      minimum-idle: 20
+      maximum-pool-size: 100
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+      leak-detection-threshold: 60000
+      connection-test-query: SELECT 1
+
+# 日志配置 - 生产环境
+logging:
+  level:
+    root: WARN
+    com.migrametric: INFO
+  file:
+    name: /var/log/migrametric/application.log
