@@ -1,0 +1,6 @@
+# 测试环境主配置文件
+spring:
+  profiles:
+    active: test
+  main:
+    allow-bean-definition-overriding: true

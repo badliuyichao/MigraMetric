@@ -56,7 +56,11 @@ public enum ResultCode {
     MODULE_NOT_FOUND(30001, "模块不存在"),
     AT_LEAST_ONE_MODULE(30002, "至少选择一个模块"),
     LADDER_NOT_FOUND(40001, "阶梯配置不存在"),
-    SYSTEM_TYPE_NOT_FOUND(50001, "系统类型不存在");
+    SYSTEM_TYPE_NOT_FOUND(50001, "系统类型不存在"),
+    DATA_NOT_FOUND_ALT(50002, "数据不存在"),
+    DATA_ALREADY_EXISTS(50003, "数据已存在"),
+    DATA_REFERENCE_EXISTS(50004, "数据被引用，无法操作"),
+    PARAM_INVALID(50005, "参数无效");
 
     private final Integer code;
     private final String message;

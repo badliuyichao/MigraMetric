@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.migrametric.mapper.ladder.UserCountLadderMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.migrametric.entity.ladder.UserCountLadder">
+        <id column="id" property="id"/>
+        <result column="ladder_name" property="ladderName"/>
+        <result column="min_count" property="minCount"/>
+        <result column="max_count" property="maxCount"/>
+        <result column="weight" property="weight"/>
+        <result column="sort_order" property="sortOrder"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+    </resultMap>
+
+    <!-- 获取最大的排序顺序 -->
+    <select id="selectMaxSortOrder" resultType="java.lang.Integer">
+        SELECT MAX(sort_order) FROM sys_user_count_ladder
+    </select>
+
+    <!-- 根据排序顺序查询 -->
+    <select id="selectBySortOrder" resultMap="BaseResultMap">
+        SELECT * FROM sys_user_count_ladder WHERE sort_order = #{sortOrder}
+    </select>
+
+</mapper>

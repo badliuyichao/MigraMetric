@@ -9,7 +9,7 @@ import '@/styles/index.scss'
 
 import App from './App.vue'
 import router from './router'
-import permission from './router/permission'
+import { setupPermission } from './router/permission'
 
 const app = createApp(App)
 
@@ -24,14 +24,15 @@ const pinia = createPinia()
 // 使用插件
 app.use(pinia)
 app.use(router)
-app.use(permission)
+setupPermission(app)
 app.use(ElementPlus, {
   locale: zhCn,
   size: 'default'
 })
 
-// 全局挂载
-app.config.errorHandler = (err, instance, info) => {
+// 全局错误处理
+// eslint-disable-next-line no-console
+app.config.errorHandler = (err, _instance, info) => {
   console.error('全局错误:', err)
   console.error('错误信息:', info)
 }

@@ -34,35 +34,32 @@
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="projectName" label="项目名称" min-width="180">
           <template #default="{ row }">
             <el-link type="primary" @click="handleView(row)">{{ row.projectName }}</el-link>
           </template>
         </el-table-column>
-        <el-table-column prop="customerName" label="客户名称" />
-        <el-table-column label="源系统 → 目标系统" width="200">
+        <el-table-column prop="customerName" label="客户名称" min-width="150" />
+        <el-table-column label="源系统 → 目标系统" width="220">
           <template #default="{ row }">
-            {{ row.sourceSystem }} → {{ row.targetSystem }}
+            {{ row.sourceSystemName || '-' }} → {{ row.targetSystemName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="manager" label="负责人" width="100" />
-        <el-table-column prop="status" label="状态" width="100">
+        <el-table-column prop="projectLeader" label="负责人" width="100" />
+        <el-table-column prop="statusText" label="状态" width="100">
           <template #default="{ row }">
-            <el-tag :type="getStatusType(row.status)">{{ getStatusText(row.status) }}</el-tag>
+            <el-tag :type="getStatusType(row.status)">{{ row.statusText }}</el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="evaluationDate" label="评估日期" width="120" />
-        <el-table-column label="操作" width="280" fixed="right">
+        <el-table-column prop="createTime" label="创建时间" width="160" />
+        <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleView(row)">查看</el-button>
-            <el-button type="success" link @click="handleEvaluate(row)">评估</el-button>
-            <el-button type="warning" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="info" link @click="handleCopy(row)">复制</el-button>
-            <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="handleDelete(row)">
-              删除
-            </el-button>
+            <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleEdit(row)">编辑</el-button>
+            <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="handleDelete(row)">删除</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -84,11 +81,16 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import type { ProjectVO, ProjectQuery } from '@/api/project/projects'
+import { queryProjectPage } from '@/api/project/projects'
 
 const router = useRouter()
+
+// 加载状态
+const loading = ref(false)
 
 // 搜索表单
 const searchForm = reactive({
@@ -105,22 +107,11 @@ const pagination = reactive({
 })
 
 // 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    projectName: 'XX公司ERP迁移项目',
-    customerName: 'XX公司',
-    sourceSystem: 'SAP',
-    targetSystem: '用友',
-    manager: '张三',
-    status: 'IN_PROGRESS',
-    evaluationDate: '2026-03-19'
-  }
-])
+const tableData = ref<ProjectVO[]>([])
 
 // 获取状态类型
-function getStatusType(status: string) {
-  const map: Record<string, string> = {
+function getStatusType(status: string): 'success' | 'primary' | 'warning' | 'info' | 'danger' {
+  const map: Record<string, 'success' | 'primary' | 'warning' | 'info' | 'danger'> = {
     DRAFT: 'info',
     IN_PROGRESS: 'primary',
     COMPLETED: 'success',
@@ -129,20 +120,31 @@ function getStatusType(status: string) {
   return map[status] || 'info'
 }
 
-// 获取状态文本
-function getStatusText(status: string) {
-  const map: Record<string, string> = {
-    DRAFT: '草稿',
-    IN_PROGRESS: '进行中',
-    COMPLETED: '已完成',
-    ARCHIVED: '已归档'
+// 加载数据
+async function loadData() {
+  loading.value = true
+  try {
+    const params: ProjectQuery = {
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+      projectName: searchForm.projectName || undefined,
+      customerName: searchForm.customerName || undefined,
+      status: searchForm.status as ProjectQuery['status'] || undefined
+    }
+    const res = await queryProjectPage(params)
+    tableData.value = res.records
+    pagination.total = res.total
+  } catch {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
   }
-  return map[status] || status
 }
 
 // 搜索
 function handleSearch() {
-  // TODO: 调用API获取数据
+  pagination.pageNum = 1
+  loadData()
 }
 
 // 重置
@@ -160,47 +162,40 @@ function handleSizeChange() {
 
 // 页码改变
 function handlePageChange() {
-  handleSearch()
+  loadData()
 }
 
 // 查看
-function handleView(row: { id: number }) {
-  router.push(`/project/detail/${row.id}`)
-}
-
-// 评估
-function handleEvaluate(row: { id: number }) {
+function handleView(row: ProjectVO) {
   router.push(`/project/detail/${row.id}`)
 }
 
 // 编辑
-function handleEdit(row: { id: number }) {
+function handleEdit(row: ProjectVO) {
   router.push(`/project/detail/${row.id}`)
 }
 
-// 复制
-function handleCopy(row: { id: number }) {
-  ElMessageBox.confirm('确定要复制该项目吗？', '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'info'
-  }).then(() => {
-    ElMessage.success('复制成功')
-    handleSearch()
-  })
+// 删除
+async function handleDelete(row: ProjectVO) {
+  try {
+    await ElMessageBox.confirm('确定要删除该项目吗？删除后不可恢复', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    // TODO: 调用删除API
+    // await deleteProject(row.id)
+    ElMessage.success('删除成功')
+    loadData()
+  } catch {
+    // 用户取消
+  }
 }
 
-// 删除
-function handleDelete(row: { id: number }) {
-  ElMessageBox.confirm('确定要删除该项目吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
-    ElMessage.success('删除成功')
-    handleSearch()
-  })
-}
+// 页面加载时获取数据
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="scss" scoped>

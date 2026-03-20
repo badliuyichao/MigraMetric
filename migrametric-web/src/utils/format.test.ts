@@ -125,4 +125,76 @@ describe('Date Format Utils', () => {
       expect(isTomorrow(getToday())).toBe(false)
     })
   })
+
+  describe('边界测试 - 闰年处理', () => {
+    it('闰年2月29日应正确处理', () => {
+      const leapDay = new Date('2028-02-29T10:30:00')
+      expect(formatDate(leapDay)).toBe('2028-02-29')
+    })
+
+    it('非闰年2月28日应正确处理', () => {
+      const normalDay = new Date('2027-02-28T10:30:00')
+      expect(formatDate(normalDay)).toBe('2027-02-28')
+    })
+  })
+
+  describe('边界测试 - 月末处理', () => {
+    it('31号月份月末应正确处理', () => {
+      expect(formatDate('2026-01-31')).toBe('2026-01-31')
+      expect(formatDate('2026-03-31')).toBe('2026-03-31')
+      expect(formatDate('2026-05-31')).toBe('2026-05-31')
+      expect(formatDate('2026-07-31')).toBe('2026-07-31')
+      expect(formatDate('2026-08-31')).toBe('2026-08-31')
+      expect(formatDate('2026-10-31')).toBe('2026-10-31')
+      expect(formatDate('2026-12-31')).toBe('2026-12-31')
+    })
+
+    it('30号月份月末应正确处理', () => {
+      expect(formatDate('2026-04-30')).toBe('2026-04-30')
+      expect(formatDate('2026-06-30')).toBe('2026-06-30')
+      expect(formatDate('2026-09-30')).toBe('2026-09-30')
+      expect(formatDate('2026-11-30')).toBe('2026-11-30')
+    })
+
+    it('2月份月末应正确处理（平年）', () => {
+      expect(formatDate('2026-02-28')).toBe('2026-02-28')
+    })
+
+    it('2月份月末应正确处理（闰年）', () => {
+      expect(formatDate('2028-02-29')).toBe('2028-02-29')
+    })
+  })
+
+  describe('边界测试 - 年份边界', () => {
+    it('年末应正确处理', () => {
+      expect(formatDate('2026-12-31')).toBe('2026-12-31')
+    })
+
+    it('年初应正确处理', () => {
+      expect(formatDate('2026-01-01')).toBe('2026-01-01')
+    })
+  })
+
+  describe('边界测试 - 时间边界', () => {
+    it('UTC时间应正确转换', () => {
+      const utcDate = new Date('2026-03-20T00:00:00Z')
+      const result = formatDateTime(utcDate)
+      expect(result).toMatch(/^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/)
+    })
+
+    it('月初应正确处理', () => {
+      expect(formatDate('2026-03-01')).toBe('2026-03-01')
+    })
+  })
+
+  describe('边界测试 - 特殊数值', () => {
+    it('单日期应补零', () => {
+      expect(formatDate('2026-03-01')).toBe('2026-03-01')
+      expect(formatDate('2026-01-09')).toBe('2026-01-09')
+    })
+
+    it('负数天数计算应正确', () => {
+      expect(diffDays('2026-03-01', '2026-03-15')).toBe(-14)
+    })
+  })
 })

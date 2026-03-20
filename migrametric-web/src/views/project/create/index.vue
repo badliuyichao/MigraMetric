@@ -24,26 +24,42 @@
         </el-form-item>
 
         <el-form-item label="源系统" prop="sourceSystemId">
-          <el-select v-model="formData.sourceSystemId" placeholder="请选择源系统">
-            <el-option label="SAP" value="1" />
-            <el-option label="Oracle" value="2" />
-            <el-option label="金蝶" value="3" />
+          <el-select
+            v-model="formData.sourceSystemId"
+            placeholder="请选择源系统"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="system in sourceSystemList"
+              :key="system.id"
+              :label="system.systemName"
+              :value="system.id"
+            />
           </el-select>
         </el-form-item>
 
         <el-form-item label="目标系统" prop="targetSystemId">
-          <el-select v-model="formData.targetSystemId" placeholder="请选择目标系统">
-            <el-option label="用友" value="4" />
-            <el-option label="SAP" value="5" />
-            <el-option label="浪潮" value="6" />
+          <el-select
+            v-model="formData.targetSystemId"
+            placeholder="请选择目标系统"
+            filterable
+            style="width: 100%"
+          >
+            <el-option
+              v-for="system in targetSystemList"
+              :key="system.id"
+              :label="system.systemName"
+              :value="system.id"
+            />
           </el-select>
         </el-form-item>
 
-        <el-form-item label="项目负责人">
-          <el-input v-model="formData.manager" placeholder="请输入项目负责人" />
+        <el-form-item label="项目负责人" prop="projectLeader">
+          <el-input v-model="formData.projectLeader" placeholder="请输入项目负责人" />
         </el-form-item>
 
-        <el-form-item label="联系方式">
+        <el-form-item label="联系方式" prop="contact">
           <el-input v-model="formData.contact" placeholder="请输入联系方式" />
         </el-form-item>
 
@@ -53,17 +69,25 @@
             type="date"
             placeholder="请选择评估日期"
             value-format="YYYY-MM-DD"
+            style="width: 100%"
           />
         </el-form-item>
 
-        <el-form-item label="项目描述">
-          <el-input v-model="formData.description" type="textarea" rows="4" placeholder="请输入项目描述" />
+        <el-form-item label="项目描述" prop="description">
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="4"
+            placeholder="请输入项目描述"
+          />
         </el-form-item>
 
         <el-form-item>
           <el-button @click="handleCancel">取消</el-button>
-          <el-button @click="handleSave">保存</el-button>
-          <el-button type="primary" @click="handleSaveAndEvaluate">保存并开始评估</el-button>
+          <el-button type="primary" :loading="submitLoading" @click="handleSave">保存</el-button>
+          <el-button type="success" :loading="submitLoading" @click="handleSaveAndEvaluate">
+            保存并开始评估
+          </el-button>
         </el-form-item>
       </el-form>
     </el-card>
@@ -71,23 +95,38 @@
 </template>
 
 <script setup lang="ts">
-import { ref, reactive } from 'vue'
+import { ref, reactive, computed, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, FormInstance, FormRules } from 'element-plus'
+import type { SystemTypeVO } from '@/api/system/types'
+import { listEnabledSystemTypes } from '@/api/system/types'
+import { createProject, type ProjectCreate } from '@/api/project/projects'
 
 const router = useRouter()
 const formRef = ref<FormInstance>()
+const submitLoading = ref(false)
+const systemList = ref<SystemTypeVO[]>([])
 
 const formData = reactive({
   projectName: '',
   customerName: '',
-  sourceSystemId: '',
-  targetSystemId: '',
-  manager: '',
+  sourceSystemId: null as number | null,
+  targetSystemId: null as number | null,
+  projectLeader: '',
   contact: '',
   evaluationDate: '',
   description: ''
 })
+
+// 源系统列表（源系统类别=1）
+const sourceSystemList = computed(() =>
+  systemList.value.filter(s => s.systemCategory === 1)
+)
+
+// 目标系统列表（目标系统类别=2）
+const targetSystemList = computed(() =>
+  systemList.value.filter(s => s.systemCategory === 2)
+)
 
 const formRules: FormRules = {
   projectName: [
@@ -98,12 +137,14 @@ const formRules: FormRules = {
     { required: true, message: '请输入客户名称', trigger: 'blur' },
     { max: 200, message: '长度不能超过200个字符', trigger: 'blur' }
   ],
-  sourceSystemId: [{ required: true, message: '请选择源系统', trigger: 'change' }],
+  sourceSystemId: [
+    { required: true, message: '请选择源系统', trigger: 'change' }
+  ],
   targetSystemId: [
     { required: true, message: '请选择目标系统', trigger: 'change' },
     {
-      validator: (_rule, value, callback) => {
-        if (value === formData.sourceSystemId) {
+      validator: (_rule: unknown, value: number, callback) => {
+        if (value && value === formData.sourceSystemId) {
           callback(new Error('目标系统不能与源系统相同'))
         } else {
           callback()
@@ -112,32 +153,84 @@ const formRules: FormRules = {
       trigger: 'change'
     }
   ],
-  evaluationDate: [{ required: true, message: '请选择评估日期', trigger: 'change' }]
+  evaluationDate: [
+    { required: true, message: '请选择评估日期', trigger: 'change' }
+  ]
+}
+
+// 加载系统列表
+async function loadSystemList() {
+  try {
+    const res = await listEnabledSystemTypes()
+    systemList.value = res
+  } catch {
+    ElMessage.error('加载系统列表失败')
+  }
 }
 
 function handleCancel() {
   router.push('/project/list')
 }
 
-function handleSave() {
-  formRef.value?.validate((valid) => {
-    if (valid) {
-      // TODO: 调用API保存数据
-      ElMessage.success('保存成功')
-      router.push('/project/list')
+async function handleSave() {
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+    submitLoading.value = true
+
+    const data: ProjectCreate = {
+      projectName: formData.projectName,
+      customerName: formData.customerName,
+      sourceSystemId: formData.sourceSystemId!,
+      targetSystemId: formData.targetSystemId!,
+      projectLeader: formData.projectLeader || undefined,
+      contact: formData.contact || undefined,
+      description: formData.description || undefined,
+      evaluationDate: formData.evaluationDate
     }
-  })
+
+    await createProject(data)
+    ElMessage.success('保存成功')
+    router.push('/project/list')
+  } catch {
+    // 表单验证失败或其他错误
+  } finally {
+    submitLoading.value = false
+  }
 }
 
-function handleSaveAndEvaluate() {
-  formRef.value?.validate((valid) => {
-    if (valid) {
-      // TODO: 调用API保存数据并跳转到评估页面
-      ElMessage.success('保存成功，开始评估')
-      router.push('/project/detail/1')
+async function handleSaveAndEvaluate() {
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+    submitLoading.value = true
+
+    const data: ProjectCreate = {
+      projectName: formData.projectName,
+      customerName: formData.customerName,
+      sourceSystemId: formData.sourceSystemId!,
+      targetSystemId: formData.targetSystemId!,
+      projectLeader: formData.projectLeader || undefined,
+      contact: formData.contact || undefined,
+      description: formData.description || undefined,
+      evaluationDate: formData.evaluationDate
     }
-  })
+
+    const projectId = await createProject(data)
+    ElMessage.success('保存成功，开始评估')
+    router.push(`/project/detail/${projectId}`)
+  } catch {
+    // 表单验证失败或其他错误
+  } finally {
+    submitLoading.value = false
+  }
 }
+
+onMounted(() => {
+  loadSystemList()
+})
 </script>
 
 <style lang="scss" scoped>

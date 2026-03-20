@@ -1,5 +1,4 @@
 import { createRouter, createWebHistory, RouteRecordRaw } from 'vue-router'
-import { useUserStore } from '@/stores/user'
 
 const routes: RouteRecordRaw[] = [
   {
@@ -45,6 +44,68 @@ const routes: RouteRecordRaw[] = [
             component: () => import('@/views/system/types/index.vue'),
             meta: {
               title: '系统类型管理',
+              roles: ['ADMIN']
+            }
+          },
+          {
+            path: 'modules',
+            name: 'SystemModules',
+            component: () => import('@/views/module/index.vue'),
+            meta: {
+              title: '模块库管理',
+              roles: ['ADMIN']
+            }
+          }
+        ]
+      },
+      {
+        path: 'ladder',
+        name: 'Ladder',
+        component: () => import('@/layouts/index.vue'),
+        redirect: '/ladder/data-volume',
+        meta: {
+          title: '阶梯配置',
+          icon: 'TrendCharts',
+          roles: ['ADMIN']
+        },
+        children: [
+          {
+            path: 'data-volume',
+            name: 'DataVolumeLadder',
+            component: () => import('@/views/ladder/dataVolume.vue'),
+            meta: {
+              title: '数据量阶梯',
+              roles: ['ADMIN']
+            }
+          },
+          {
+            path: 'user-count',
+            name: 'UserCountLadder',
+            component: () => import('@/views/ladder/userCount.vue'),
+            meta: {
+              title: '用户数阶梯',
+              roles: ['ADMIN']
+            }
+          }
+        ]
+      },
+      {
+        path: 'config',
+        name: 'Config',
+        component: () => import('@/layouts/index.vue'),
+        redirect: '/config/report',
+        meta: {
+          title: '系统配置',
+          icon: 'Setting',
+          roles: ['ADMIN']
+        },
+        children: [
+          {
+            path: 'report',
+            name: 'ReportConfig',
+            component: () => import('@/views/config/reportConfig.vue'),
+            meta: {
+              title: '报表系数配置',
               roles: ['ADMIN']
             }
           }

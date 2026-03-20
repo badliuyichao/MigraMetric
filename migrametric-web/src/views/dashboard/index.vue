@@ -144,8 +144,8 @@ const recentProjects = ref([
 ])
 
 // 获取状态类型
-function getStatusType(status: string) {
-  const map: Record<string, string> = {
+function getStatusType(status: string): 'success' | 'primary' | 'warning' | 'info' | 'danger' {
+  const map: Record<string, 'success' | 'primary' | 'warning' | 'info' | 'danger'> = {
     草稿: 'info',
     进行中: 'primary',
     已完成: 'success',

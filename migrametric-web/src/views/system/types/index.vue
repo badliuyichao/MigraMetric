@@ -18,8 +18,8 @@
         </el-form-item>
         <el-form-item label="系统类型">
           <el-select v-model="searchForm.systemCategory" placeholder="请选择" clearable>
-            <el-option label="源系统" value="SOURCE" />
-            <el-option label="目标系统" value="TARGET" />
+            <el-option label="源系统" :value="1" />
+            <el-option label="目标系统" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
@@ -35,21 +35,21 @@
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="systemName" label="系统名称" />
-        <el-table-column prop="systemCategory" label="系统类型" width="120">
+        <el-table-column prop="systemCategoryText" label="系统类型" width="120">
           <template #default="{ row }">
-            <el-tag :type="row.systemCategory === 'SOURCE' ? 'success' : 'warning'">
-              {{ row.systemCategory === 'SOURCE' ? '源系统' : '目标系统' }}
+            <el-tag :type="row.systemCategory === 1 ? 'success' : 'warning'">
+              {{ row.systemCategoryText }}
             </el-tag>
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="status" label="状态" width="80">
+        <el-table-column prop="statusText" label="状态" width="80">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
-              {{ row.status === 1 ? '启用' : '禁用' }}
+              {{ row.statusText }}
             </el-tag>
           </template>
         </el-table-column>
@@ -57,7 +57,7 @@
         <el-table-column label="操作" width="200" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleEdit(row)">编辑</el-button>
-            <el-button type="danger" link @click="handleToggleStatus(row)">
+            <el-button type="warning" link @click="handleToggleStatus(row)">
               {{ row.status === 1 ? '禁用' : '启用' }}
             </el-button>
             <el-button type="danger" link @click="handleDelete(row)">删除</el-button>
@@ -80,44 +80,55 @@
     </el-card>
 
     <!-- 新增/编辑弹窗 -->
-    <el-dialog
-      v-model="dialogVisible"
-      :title="dialogTitle"
-      width="500px"
-      @close="handleDialogClose"
-    >
+    <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="系统名称" prop="systemName">
           <el-input v-model="formData.systemName" placeholder="请输入系统名称" />
         </el-form-item>
         <el-form-item label="系统类型" prop="systemCategory">
           <el-radio-group v-model="formData.systemCategory">
-            <el-radio label="SOURCE">源系统</el-radio>
-            <el-radio label="TARGET">目标系统</el-radio>
+            <el-radio :label="1">源系统</el-radio>
+            <el-radio :label="2">目标系统</el-radio>
           </el-radio-group>
         </el-form-item>
         <el-form-item label="描述" prop="description">
-          <el-input v-model="formData.description" type="textarea" rows="3" placeholder="请输入描述" />
+          <el-input
+            v-model="formData.description"
+            type="textarea"
+            :rows="3"
+            placeholder="请输入描述"
+          />
         </el-form-item>
       </el-form>
       <template #footer>
         <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" @click="handleSubmit">确定</el-button>
+        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, computed } from 'vue'
+import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
+import type { SystemTypeVO, SystemTypeQuery, SystemTypeCreate } from '@/api/system/types'
+import {
+  querySystemTypePage,
+  createSystemType,
+  updateSystemType,
+  deleteSystemType,
+  enableSystemType,
+  disableSystemType
+} from '@/api/system/types'
 
 const formRef = ref<FormInstance>()
+const loading = ref(false)
+const submitLoading = ref(false)
 
 // 搜索表单
 const searchForm = reactive({
   systemName: '',
-  systemCategory: '',
+  systemCategory: null as number | null,
   status: null as number | null
 })
 
@@ -129,24 +140,7 @@ const pagination = reactive({
 })
 
 // 表格数据
-const tableData = ref([
-  {
-    id: 1,
-    systemName: 'SAP',
-    systemCategory: 'SOURCE',
-    description: 'SAP ERP系统',
-    status: 1,
-    createTime: '2026-03-19 10:00:00'
-  },
-  {
-    id: 2,
-    systemName: '用友',
-    systemCategory: 'TARGET',
-    description: '用友U8系统',
-    status: 1,
-    createTime: '2026-03-19 10:00:00'
-  }
-])
+const tableData = ref<SystemTypeVO[]>([])
 
 // 弹窗控制
 const dialogVisible = ref(false)
@@ -156,7 +150,7 @@ const dialogTitle = ref('新增系统类型')
 const formData = reactive({
   id: null as number | null,
   systemName: '',
-  systemCategory: 'SOURCE',
+  systemCategory: 1,
   description: ''
 })
 
@@ -169,16 +163,37 @@ const formRules: FormRules = {
   systemCategory: [{ required: true, message: '请选择系统类型', trigger: 'change' }]
 }
 
+// 加载数据
+async function loadData() {
+  loading.value = true
+  try {
+    const params: SystemTypeQuery = {
+      pageNum: pagination.pageNum,
+      pageSize: pagination.pageSize,
+      systemName: searchForm.systemName || undefined,
+      systemCategory: searchForm.systemCategory ?? undefined,
+      status: searchForm.status ?? undefined
+    }
+    const res = await querySystemTypePage(params)
+    tableData.value = res.records
+    pagination.total = res.total
+  } catch {
+    ElMessage.error('加载数据失败')
+  } finally {
+    loading.value = false
+  }
+}
+
 // 搜索
 function handleSearch() {
   pagination.pageNum = 1
-  // TODO: 调用API获取数据
+  loadData()
 }
 
 // 重置
 function handleReset() {
   searchForm.systemName = ''
-  searchForm.systemCategory = ''
+  searchForm.systemCategory = null
   searchForm.status = null
   handleSearch()
 }
@@ -190,45 +205,64 @@ function handleSizeChange() {
 
 // 页码改变
 function handlePageChange() {
-  handleSearch()
+  loadData()
 }
 
 // 新增
 function handleAdd() {
   dialogTitle.value = '新增系统类型'
+  formData.id = null
+  formData.systemName = ''
+  formData.systemCategory = 1
+  formData.description = ''
   dialogVisible.value = true
 }
 
 // 编辑
-function handleEdit(row: { id: number }) {
+function handleEdit(row: SystemTypeVO) {
   dialogTitle.value = '编辑系统类型'
-  // TODO: 填充表单数据
+  formData.id = row.id
+  formData.systemName = row.systemName
+  formData.systemCategory = row.systemCategory
+  formData.description = row.description || ''
   dialogVisible.value = true
 }
 
 // 切换状态
-function handleToggleStatus(row: { id: number; status: number }) {
+async function handleToggleStatus(row: SystemTypeVO) {
   const action = row.status === 1 ? '禁用' : '启用'
-  ElMessageBox.confirm(`确定要${action}该系统类型吗？`, '提示', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
+  try {
+    await ElMessageBox.confirm(`确定要${action}该系统类型吗？`, '提示', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    if (row.status === 1) {
+      await disableSystemType(row.id)
+    } else {
+      await enableSystemType(row.id)
+    }
     ElMessage.success(`${action}成功`)
-    handleSearch()
-  })
+    loadData()
+  } catch {
+    // 用户取消
+  }
 }
 
 // 删除
-function handleDelete(row: { id: number }) {
-  ElMessageBox.confirm('确定要删除该系统类型吗？删除后不可恢复', '警告', {
-    confirmButtonText: '确定',
-    cancelButtonText: '取消',
-    type: 'warning'
-  }).then(() => {
+async function handleDelete(row: SystemTypeVO) {
+  try {
+    await ElMessageBox.confirm('确定要删除该系统类型吗？删除后不可恢复', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await deleteSystemType(row.id)
     ElMessage.success('删除成功')
-    handleSearch()
-  })
+    loadData()
+  } catch {
+    // 用户取消
+  }
 }
 
 // 弹窗关闭
@@ -237,16 +271,42 @@ function handleDialogClose() {
 }
 
 // 提交表单
-function handleSubmit() {
-  formRef.value?.validate((valid) => {
-    if (valid) {
-      // TODO: 调用API保存数据
-      ElMessage.success('保存成功')
-      dialogVisible.value = false
-      handleSearch()
+async function handleSubmit() {
+  if (!formRef.value) return
+
+  try {
+    await formRef.value.validate()
+    submitLoading.value = true
+
+    const data: SystemTypeCreate = {
+      systemName: formData.systemName,
+      systemCategory: formData.systemCategory,
+      description: formData.description
     }
-  })
+
+    if (formData.id) {
+      // 编辑
+      await updateSystemType(formData.id, { ...data, id: formData.id })
+      ElMessage.success('更新成功')
+    } else {
+      // 新增
+      await createSystemType(data)
+      ElMessage.success('创建成功')
+    }
+
+    dialogVisible.value = false
+    loadData()
+  } catch {
+    // 表单验证失败或其他错误
+  } finally {
+    submitLoading.value = false
+  }
 }
+
+// 页面加载时获取数据
+onMounted(() => {
+  loadData()
+})
 </script>
 
 <style lang="scss" scoped>

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import { request, type ApiResponse } from '@/utils/request'
+import { request } from '@/utils/request'
 
 export interface UserInfo {
   id: number
@@ -40,7 +40,8 @@ export const useUserStore = defineStore('user', () => {
    */
   async function login(loginData: LoginData): Promise<void> {
     const response = await request.post<LoginResult>('/auth/login', loginData)
-    const result = response.data
+    // response.data 是 ApiResponse<LoginResult>，response.data.data 才是 LoginResult
+    const result = (response.data as { data: LoginResult }).data
 
     if (result) {
       token.value = result.token
@@ -56,7 +57,8 @@ export const useUserStore = defineStore('user', () => {
 
     try {
       const response = await request.get<UserInfo>('/auth/info')
-      const result = response.data
+      // response.data 是 ApiResponse<UserInfo>，response.data.data 才是 UserInfo
+      const result = (response.data as { data: UserInfo }).data
 
       if (result) {
         userInfo.value = result
