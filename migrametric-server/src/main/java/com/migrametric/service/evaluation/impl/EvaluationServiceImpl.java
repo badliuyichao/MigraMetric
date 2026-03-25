@@ -1,20 +1,28 @@
 package com.migrametric.service.evaluation.impl;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.migrametric.common.BusinessException;
+import com.migrametric.common.ResultCode;
+import com.migrametric.dto.evaluation.EvaluationCreateDTO;
+import com.migrametric.dto.evaluation.EvaluationUpdateDTO;
 import com.migrametric.entity.evaluation.Evaluation;
 import com.migrametric.entity.evaluation.ProjectModuleConfig;
 import com.migrametric.entity.ladder.DataVolumeLadder;
 import com.migrametric.entity.ladder.UserCountLadder;
+import com.migrametric.entity.project.Project;
 import com.migrametric.mapper.evaluation.EvaluationMapper;
 import com.migrametric.mapper.evaluation.ProjectModuleConfigMapper;
 import com.migrametric.mapper.ladder.DataVolumeLadderMapper;
 import com.migrametric.mapper.ladder.UserCountLadderMapper;
+import com.migrametric.mapper.project.ProjectMapper;
 import com.migrametric.service.evaluation.EvaluationService;
 import com.migrametric.vo.evaluation.EvaluationVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.Map;
 import java.util.function.Function;
 import java.util.stream.Collectors;
@@ -33,6 +41,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final ProjectModuleConfigMapper moduleConfigMapper;
     private final DataVolumeLadderMapper dataVolumeLadderMapper;
     private final UserCountLadderMapper userCountLadderMapper;
+    private final ProjectMapper projectMapper;
 
     /**
      * 评估状态常量
@@ -86,19 +95,21 @@ public class EvaluationServiceImpl implements EvaluationService {
         vo.setCreateTime(evaluation.getCreateTime());
         vo.setUpdateTime(evaluation.getUpdateTime());
 
-        // 查询数据量阶梯名称
+        // 查询数据量阶梯名称和系数
         if (evaluation.getDataVolumeLadderId() != null) {
             DataVolumeLadder ladder = dataVolumeLadderMapper.selectById(evaluation.getDataVolumeLadderId());
             if (ladder != null) {
                 vo.setDataVolumeLadderName(ladder.getLadderName());
+                vo.setDataVolumeWeight(ladder.getWeight());
             }
         }
 
-        // 查询用户数阶梯名称
+        // 查询用户数阶梯名称和系数
         if (evaluation.getUserCountLadderId() != null) {
             UserCountLadder ladder = userCountLadderMapper.selectById(evaluation.getUserCountLadderId());
             if (ladder != null) {
                 vo.setUserCountLadderName(ladder.getLadderName());
+                vo.setUserCountWeight(ladder.getWeight());
             }
         }
 
@@ -136,5 +147,109 @@ public class EvaluationServiceImpl implements EvaluationService {
             case 3 -> "复杂";
             default -> "未知";
         };
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public Long createEvaluation(EvaluationCreateDTO dto) {
+        // 校验项目是否存在
+        Project project = projectMapper.selectById(dto.getProjectId());
+        if (project == null) {
+            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
+        }
+
+        // 检查评估是否已存在
+        if (existsByProjectId(dto.getProjectId())) {
+            throw new BusinessException(ResultCode.DATA_ALREADY_EXISTS);
+        }
+
+        // 创建评估记录
+        Evaluation evaluation = new Evaluation();
+        evaluation.setProjectId(dto.getProjectId());
+        evaluation.setEvaluationStatus(EVAL_STATUS_DRAFT);
+        evaluationMapper.insert(evaluation);
+
+        log.info("创建评估记录成功, projectId: {}, evaluationId: {}", dto.getProjectId(), evaluation.getId());
+        return evaluation.getId();
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void saveIndicators(Long projectId, EvaluationUpdateDTO dto) {
+        // 校验项目是否存在
+        Project project = projectMapper.selectById(projectId);
+        if (project == null) {
+            throw new BusinessException(ResultCode.PROJECT_NOT_FOUND);
+        }
+
+        // 查询或创建评估记录
+        Evaluation evaluation = getEvaluationByProjectId(projectId);
+        if (evaluation == null) {
+            // 创建新的评估记录
+            evaluation = new Evaluation();
+            evaluation.setProjectId(projectId);
+        }
+
+        // 更新评估指标
+        evaluation.setTableCount(dto.getTableCount());
+        evaluation.setDataVolume(dto.getDataVolume());
+        evaluation.setDataVolumeLadderId(dto.getDataVolumeLadderId());
+        evaluation.setUserCount(dto.getUserCount());
+        evaluation.setUserCountLadderId(dto.getUserCountLadderId());
+        evaluation.setReportCount(dto.getReportCount());
+        evaluation.setHasCustomDev(dto.getHasCustomDev());
+        evaluation.setCustomDevCount(dto.getCustomDevCount());
+        evaluation.setCustomDevWorkload(dto.getCustomDevWorkload());
+        evaluation.setDataCleanDesc(dto.getDataCleanDesc());
+        evaluation.setDataCleanComplexity(dto.getDataCleanComplexity());
+
+        // 如果评估不存在，设置为进行中状态
+        if (evaluation.getId() == null) {
+            evaluation.setEvaluationStatus(EVAL_STATUS_IN_PROGRESS);
+            evaluationMapper.insert(evaluation);
+            log.info("创建评估记录并保存指标, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
+        } else {
+            evaluation.setEvaluationStatus(EVAL_STATUS_IN_PROGRESS);
+            evaluationMapper.updateById(evaluation);
+            log.info("更新评估指标, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
+        }
+    }
+
+    @Override
+    public boolean existsByProjectId(Long projectId) {
+        LambdaQueryWrapper<Evaluation> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Evaluation::getProjectId, projectId);
+        return evaluationMapper.exists(wrapper);
+    }
+
+    @Override
+    @Transactional(rollbackFor = Exception.class)
+    public void completeEvaluation(Long projectId) {
+        Evaluation evaluation = getEvaluationByProjectId(projectId);
+        if (evaluation == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "评估记录不存在");
+        }
+
+        // 检查是否有工作量
+        if (evaluation.getTotalWorkload() == null) {
+            throw new BusinessException(ResultCode.VALIDATION_ERROR, "请先计算工作量");
+        }
+
+        // 更新评估状态为已完成
+        evaluation.setEvaluationStatus(EVAL_STATUS_COMPLETED);
+        evaluation.setEvaluationTime(LocalDateTime.now());
+        evaluation.setUpdateTime(LocalDateTime.now());
+        evaluationMapper.updateById(evaluation);
+
+        log.info("评估完成, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
+    }
+
+    /**
+     * 获取评估记录（内部方法）
+     */
+    private Evaluation getEvaluationByProjectId(Long projectId) {
+        LambdaQueryWrapper<Evaluation> wrapper = new LambdaQueryWrapper<>();
+        wrapper.eq(Evaluation::getProjectId, projectId);
+        return evaluationMapper.selectOne(wrapper);
     }
 }

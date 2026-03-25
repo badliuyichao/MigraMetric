@@ -145,6 +145,33 @@ const routes: RouteRecordRaw[] = [
               title: '项目详情',
               hidden: true
             }
+          },
+          {
+            path: 'edit/:id',
+            name: 'ProjectEdit',
+            component: () => import('@/views/project/edit/index.vue'),
+            meta: {
+              title: '编辑项目',
+              hidden: true
+            }
+          },
+          {
+            path: 'evaluate/:id',
+            name: 'ProjectEvaluate',
+            component: () => import('@/views/project/evaluate/index.vue'),
+            meta: {
+              title: '工作量评估',
+              hidden: true
+            }
+          },
+          {
+            path: 'statistics/:id',
+            name: 'ProjectStatistics',
+            component: () => import('@/views/project/statistics/index.vue'),
+            meta: {
+              title: '统计图表',
+              hidden: true
+            }
           }
         ]
       }

@@ -68,6 +68,9 @@
             查看报告
           </el-button>
           <el-button @click="handleExport">导出报告</el-button>
+          <el-button v-if="projectInfo.status === 'DRAFT'" @click="handleCopy">复制项目</el-button>
+          <el-button v-if="projectInfo.status === 'COMPLETED'" type="warning" @click="handleArchive">归档项目</el-button>
+          <el-button v-if="projectInfo.status === 'DRAFT'" type="danger" @click="handleDelete">删除项目</el-button>
         </div>
       </el-card>
 
@@ -128,8 +131,15 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage } from 'element-plus'
-import { getProjectDetail, type ProjectDetailVO, type ProjectStatus } from '@/api/project/projects'
+import { ElMessage, ElMessageBox } from 'element-plus'
+import {
+  getProjectDetail,
+  deleteProject,
+  archiveProject,
+  copyProject,
+  type ProjectDetailVO,
+  type ProjectStatus
+} from '@/api/project/projects'
 
 const router = useRouter()
 const route = useRoute()
@@ -211,9 +221,8 @@ async function loadProjectDetail() {
   try {
     const detail = await getProjectDetail(projectId)
     Object.assign(projectInfo, detail)
-  } catch (error) {
+  } catch {
     ElMessage.error('加载项目详情失败')
-    console.error('加载项目详情失败:', error)
     router.push('/project/list')
   } finally {
     loading.value = false
@@ -242,10 +251,10 @@ function handleContinueEvaluation() {
 }
 
 /**
- * 查看报告
+ * 查看报告（统计图表）
  */
 function handleViewReport() {
-  router.push(`/project/report/${route.params.id}`)
+  router.push(`/project/statistics/${route.params.id}`)
 }
 
 /**
@@ -253,6 +262,60 @@ function handleViewReport() {
  */
 function handleExport() {
   ElMessage.info('导出功能开发中')
+}
+
+/**
+ * 复制项目
+ */
+async function handleCopy() {
+  try {
+    await ElMessageBox.confirm('确定要复制该项目吗？', '确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+    const newId = await copyProject(Number(route.params.id))
+    ElMessage.success('复制成功')
+    router.push(`/project/detail/${newId}`)
+  } catch {
+    // 用户取消或复制失败
+  }
+}
+
+/**
+ * 归档项目
+ */
+async function handleArchive() {
+  try {
+    await ElMessageBox.confirm('确定要归档该项目吗？归档后项目将变为只读状态', '确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+    await archiveProject(Number(route.params.id))
+    ElMessage.success('归档成功')
+    loadProjectDetail()
+  } catch {
+    // 用户取消或归档失败
+  }
+}
+
+/**
+ * 删除项目
+ */
+async function handleDelete() {
+  try {
+    await ElMessageBox.confirm('确定要删除该项目吗？删除后不可恢复', '警告', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'warning'
+    })
+    await deleteProject(Number(route.params.id))
+    ElMessage.success('删除成功')
+    router.push('/project/list')
+  } catch {
+    // 用户取消或删除失败
+  }
 }
 
 onMounted(() => {

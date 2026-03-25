@@ -28,6 +28,20 @@ export interface ProjectCreate {
 }
 
 /**
+ * 项目更新参数
+ */
+export interface ProjectUpdate {
+  projectName?: string
+  customerName?: string
+  sourceSystemId?: number
+  targetSystemId?: number
+  projectLeader?: string
+  contact?: string
+  description?: string
+  evaluationDate?: string
+}
+
+/**
  * 项目查询参数
  */
 export interface ProjectQuery {
@@ -146,4 +160,32 @@ export function getProjectById(id: number) {
  */
 export function getProjectDetail(id: number) {
   return request.get<ProjectDetailVO>(`/api/projects/${id}/detail`).then(res => res.data)
+}
+
+/**
+ * 更新项目信息
+ */
+export function updateProject(id: number, data: ProjectUpdate) {
+  return request.put<void>(`/api/projects/${id}`, data).then(res => res.data)
+}
+
+/**
+ * 复制项目
+ */
+export function copyProject(id: number) {
+  return request.post<number>(`/api/projects/${id}/copy`).then(res => res.data)
+}
+
+/**
+ * 删除项目
+ */
+export function deleteProject(id: number) {
+  return request.delete<void>(`/api/projects/${id}`).then(res => res.data)
+}
+
+/**
+ * 归档项目
+ */
+export function archiveProject(id: number) {
+  return request.post<void>(`/api/projects/${id}/archive`).then(res => res.data)
 }

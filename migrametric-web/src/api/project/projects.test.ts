@@ -5,10 +5,15 @@ import {
   getProjectById,
   getProjectDetail,
   createProject,
+  updateProject,
+  copyProject,
+  deleteProject,
+  archiveProject,
   type ProjectVO,
   type ProjectDetailVO,
   type ProjectQuery,
-  type ProjectCreate
+  type ProjectCreate,
+  type ProjectUpdate
 } from './projects'
 
 vi.mock('@/utils/request')
@@ -254,6 +259,74 @@ describe('项目管理 API', () => {
       expect(result.hasEvaluation).toBe(false)
       expect(result.totalWorkload).toBeNull()
       expect(result.selectedModuleCount).toBe(0)
+    })
+  })
+
+  describe('updateProject', () => {
+    it('应成功更新项目', async () => {
+      mockRequest.put.mockResolvedValue({ data: undefined })
+
+      const data: ProjectUpdate = {
+        projectName: '更新后的项目名称',
+        projectLeader: '李四'
+      }
+
+      const result = await updateProject(1, data)
+
+      expect(result).toBeUndefined()
+      expect(mockRequest.put).toHaveBeenCalledWith('/api/projects/1', data)
+    })
+
+    it('应支持完整更新参数', async () => {
+      mockRequest.put.mockResolvedValue({ data: undefined })
+
+      const data: ProjectUpdate = {
+        projectName: '新项目名称',
+        customerName: '新客户',
+        sourceSystemId: 1,
+        targetSystemId: 2,
+        projectLeader: '负责人',
+        contact: '13800138000',
+        description: '新描述',
+        evaluationDate: '2026-03-25'
+      }
+
+      await updateProject(1, data)
+
+      expect(mockRequest.put).toHaveBeenCalledWith('/api/projects/1', data)
+    })
+  })
+
+  describe('copyProject', () => {
+    it('应成功复制项目并返回新项目ID', async () => {
+      mockRequest.post.mockResolvedValue({ data: 200 })
+
+      const result = await copyProject(1)
+
+      expect(result).toBe(200)
+      expect(mockRequest.post).toHaveBeenCalledWith('/api/projects/1/copy')
+    })
+  })
+
+  describe('deleteProject', () => {
+    it('应成功删除项目', async () => {
+      mockRequest.delete.mockResolvedValue({ data: undefined })
+
+      const result = await deleteProject(1)
+
+      expect(result).toBeUndefined()
+      expect(mockRequest.delete).toHaveBeenCalledWith('/api/projects/1')
+    })
+  })
+
+  describe('archiveProject', () => {
+    it('应成功归档项目', async () => {
+      mockRequest.post.mockResolvedValue({ data: undefined })
+
+      const result = await archiveProject(1)
+
+      expect(result).toBeUndefined()
+      expect(mockRequest.post).toHaveBeenCalledWith('/api/projects/1/archive')
     })
   })
 })

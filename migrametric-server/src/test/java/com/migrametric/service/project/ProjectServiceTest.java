@@ -2,8 +2,10 @@ package com.migrametric.service.project;
 
 import com.migrametric.common.BusinessException;
 import com.migrametric.common.PageResult;
+import com.migrametric.common.ResultCode;
 import com.migrametric.dto.project.ProjectCreateDTO;
 import com.migrametric.dto.project.ProjectQueryDTO;
+import com.migrametric.dto.project.ProjectUpdateDTO;
 import com.migrametric.entity.evaluation.Evaluation;
 import com.migrametric.entity.project.Project;
 import com.migrametric.entity.system.SystemType;
@@ -399,6 +401,257 @@ class ProjectServiceTest {
             assertThatThrownBy(() -> projectService.create(createDTO))
                     .isInstanceOf(BusinessException.class)
                     .hasMessageContaining("目标系统已被禁用");
+        }
+    }
+
+    @Nested
+    @DisplayName("update 测试")
+    class UpdateTests {
+
+        @Test
+        @DisplayName("应成功更新项目")
+        void shouldUpdateProjectSuccessfully() {
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+            // updateDTO只设置了projectName和projectLeader，不设置source/targetSystemId，
+            // 所以不需要stub systemTypeMapper
+
+            ProjectUpdateDTO updateDTO = new ProjectUpdateDTO();
+            updateDTO.setProjectName("更新后的项目名称");
+            updateDTO.setProjectLeader("李四");
+
+            projectService.update(1L, updateDTO);
+        }
+
+        @Test
+        @DisplayName("项目不存在应抛出异常")
+        void shouldThrowExceptionWhenProjectNotFound() {
+            when(projectMapper.selectById(999L)).thenReturn(null);
+
+            ProjectUpdateDTO updateDTO = new ProjectUpdateDTO();
+            updateDTO.setProjectName("测试");
+
+            assertThatThrownBy(() -> projectService.update(999L, updateDTO))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("项目不存在");
+        }
+
+        @Test
+        @DisplayName("已归档项目不可编辑")
+        void shouldFailWhenProjectArchived() {
+            sampleProject.setStatus("ARCHIVED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            ProjectUpdateDTO updateDTO = new ProjectUpdateDTO();
+            updateDTO.setProjectName("测试");
+
+            assertThatThrownBy(() -> projectService.update(1L, updateDTO))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("已归档的项目不可编辑");
+        }
+
+        @Test
+        @DisplayName("更新时源系统和目标系统相同应抛出异常")
+        void shouldFailWhenSourceEqualsTargetOnUpdate() {
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            ProjectUpdateDTO updateDTO = new ProjectUpdateDTO();
+            updateDTO.setSourceSystemId(1L);
+            updateDTO.setTargetSystemId(1L);
+
+            assertThatThrownBy(() -> projectService.update(1L, updateDTO))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("源系统和目标系统不能相同");
+        }
+
+        @Test
+        @DisplayName("更新源系统时应校验目标系统")
+        void shouldValidateTargetSystemOnUpdate() {
+            sampleProject.setSourceSystemId(1L);
+            sampleProject.setTargetSystemId(2L);
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+            // 只stub被调用的：updateDTO.getSourceSystemId()返回null（未设置），不调用
+            // updateDTO.getTargetSystemId()返回null（未设置），不调用
+
+            ProjectUpdateDTO updateDTO = new ProjectUpdateDTO();
+            updateDTO.setProjectName("测试");
+
+            projectService.update(1L, updateDTO);
+        }
+    }
+
+    @Nested
+    @DisplayName("copy 测试")
+    class CopyTests {
+
+        @Test
+        @DisplayName("应成功复制项目")
+        void shouldCopyProjectSuccessfully() {
+            sampleProject.setProjectName("ERP迁移项目");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+            when(projectMapper.insert(any())).thenAnswer(invocation -> {
+                Project p = invocation.getArgument(0);
+                p.setId(200L);
+                return 1;
+            });
+
+            Long newId = projectService.copy(1L);
+
+            assertThat(newId).isEqualTo(200L);
+        }
+
+        @Test
+        @DisplayName("项目不存在应抛出异常")
+        void shouldThrowExceptionWhenProjectNotFound() {
+            when(projectMapper.selectById(999L)).thenReturn(null);
+
+            assertThatThrownBy(() -> projectService.copy(999L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("项目不存在");
+        }
+
+        @Test
+        @DisplayName("复制后项目名称应添加_副本后缀")
+        void shouldAddCopySuffixToProjectName() {
+            sampleProject.setProjectName("原始项目");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+            when(projectMapper.insert(any())).thenAnswer(invocation -> {
+                Project p = invocation.getArgument(0);
+                assertThat(p.getProjectName()).isEqualTo("原始项目_副本");
+                assertThat(p.getStatus()).isEqualTo("DRAFT");
+                p.setId(200L);
+                return 1;
+            });
+
+            projectService.copy(1L);
+        }
+
+        @Test
+        @DisplayName("复制后项目状态应为草稿")
+        void shouldSetDraftStatusAfterCopy() {
+            sampleProject.setStatus("COMPLETED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+            when(projectMapper.insert(any())).thenAnswer(invocation -> {
+                Project p = invocation.getArgument(0);
+                assertThat(p.getStatus()).isEqualTo("DRAFT");
+                p.setId(200L);
+                return 1;
+            });
+
+            projectService.copy(1L);
+        }
+    }
+
+    @Nested
+    @DisplayName("delete 测试")
+    class DeleteTests {
+
+        @Test
+        @DisplayName("应成功删除草稿项目")
+        void shouldDeleteDraftProjectSuccessfully() {
+            sampleProject.setStatus("DRAFT");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            projectService.delete(1L);
+        }
+
+        @Test
+        @DisplayName("项目不存在应抛出异常")
+        void shouldThrowExceptionWhenProjectNotFound() {
+            when(projectMapper.selectById(999L)).thenReturn(null);
+
+            assertThatThrownBy(() -> projectService.delete(999L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("项目不存在");
+        }
+
+        @Test
+        @DisplayName("非草稿状态项目不可删除")
+        void shouldFailWhenProjectNotDraft() {
+            sampleProject.setStatus("IN_PROGRESS");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.delete(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有草稿状态的项目可以删除");
+        }
+
+        @Test
+        @DisplayName("已完成状态项目不可删除")
+        void shouldFailWhenProjectCompleted() {
+            sampleProject.setStatus("COMPLETED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.delete(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有草稿状态的项目可以删除");
+        }
+
+        @Test
+        @DisplayName("已归档状态项目不可删除")
+        void shouldFailWhenProjectArchived() {
+            sampleProject.setStatus("ARCHIVED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.delete(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有草稿状态的项目可以删除");
+        }
+    }
+
+    @Nested
+    @DisplayName("archive 测试")
+    class ArchiveTests {
+
+        @Test
+        @DisplayName("应成功归档已完成项目")
+        void shouldArchiveCompletedProjectSuccessfully() {
+            sampleProject.setStatus("COMPLETED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            projectService.archive(1L);
+        }
+
+        @Test
+        @DisplayName("项目不存在应抛出异常")
+        void shouldThrowExceptionWhenProjectNotFound() {
+            when(projectMapper.selectById(999L)).thenReturn(null);
+
+            assertThatThrownBy(() -> projectService.archive(999L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("项目不存在");
+        }
+
+        @Test
+        @DisplayName("非完成状态项目不可归档")
+        void shouldFailWhenProjectNotCompleted() {
+            sampleProject.setStatus("IN_PROGRESS");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.archive(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有已完成的项目可以归档");
+        }
+
+        @Test
+        @DisplayName("草稿状态项目不可归档")
+        void shouldFailWhenProjectIsDraft() {
+            sampleProject.setStatus("DRAFT");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.archive(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有已完成的项目可以归档");
+        }
+
+        @Test
+        @DisplayName("已归档项目不可再次归档")
+        void shouldFailWhenProjectAlreadyArchived() {
+            sampleProject.setStatus("ARCHIVED");
+            when(projectMapper.selectById(1L)).thenReturn(sampleProject);
+
+            assertThatThrownBy(() -> projectService.archive(1L))
+                    .isInstanceOf(BusinessException.class)
+                    .hasMessageContaining("只有已完成的项目可以归档");
         }
     }
 }

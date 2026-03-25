@@ -26,6 +26,8 @@ import org.springframework.util.StringUtils;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.migrametric.dto.project.ProjectUpdateDTO;
+
 /**
  * 项目服务实现类
  *
@@ -283,5 +285,152 @@ public class ProjectServiceImpl implements ProjectService {
             case STATUS_ARCHIVED -> "已归档";
             default -> "未知";
         };
+    }
+
+    @Override
+    @Transactional
+    public void update(Long id, ProjectUpdateDTO updateDTO) {
+        // 查询项目
+        Project project = projectMapper.selectById(id);
+        if (project == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "项目不存在");
+        }
+
+        // 已归档的项目不可编辑
+        if (STATUS_ARCHIVED.equals(project.getStatus())) {
+            throw new BusinessException(ResultCode.PARAM_INVALID, "已归档的项目不可编辑");
+        }
+
+        // 校验源系统和目标系统不能相同
+        if (updateDTO.getSourceSystemId() != null && updateDTO.getTargetSystemId() != null
+                && updateDTO.getSourceSystemId().equals(updateDTO.getTargetSystemId())) {
+            throw new BusinessException(ResultCode.PARAM_INVALID, "源系统和目标系统不能相同");
+        }
+
+        // 校验源系统
+        if (updateDTO.getSourceSystemId() != null) {
+            SystemType sourceSystem = systemTypeMapper.selectById(updateDTO.getSourceSystemId());
+            if (sourceSystem == null) {
+                throw new BusinessException(ResultCode.DATA_NOT_FOUND, "源系统不存在");
+            }
+            if (sourceSystem.getStatus() != 1) {
+                throw new BusinessException(ResultCode.PARAM_INVALID, "源系统已被禁用");
+            }
+        }
+
+        // 校验目标系统
+        if (updateDTO.getTargetSystemId() != null) {
+            SystemType targetSystem = systemTypeMapper.selectById(updateDTO.getTargetSystemId());
+            if (targetSystem == null) {
+                throw new BusinessException(ResultCode.DATA_NOT_FOUND, "目标系统不存在");
+            }
+            if (targetSystem.getStatus() != 1) {
+                throw new BusinessException(ResultCode.PARAM_INVALID, "目标系统已被禁用");
+            }
+        }
+
+        // 更新字段
+        if (updateDTO.getProjectName() != null) {
+            project.setProjectName(updateDTO.getProjectName());
+        }
+        if (updateDTO.getCustomerName() != null) {
+            project.setCustomerName(updateDTO.getCustomerName());
+        }
+        if (updateDTO.getSourceSystemId() != null) {
+            project.setSourceSystemId(updateDTO.getSourceSystemId());
+        }
+        if (updateDTO.getTargetSystemId() != null) {
+            project.setTargetSystemId(updateDTO.getTargetSystemId());
+        }
+        if (updateDTO.getProjectLeader() != null) {
+            project.setProjectLeader(updateDTO.getProjectLeader());
+        }
+        if (updateDTO.getContact() != null) {
+            project.setContact(updateDTO.getContact());
+        }
+        if (updateDTO.getDescription() != null) {
+            project.setDescription(updateDTO.getDescription());
+        }
+        if (updateDTO.getEvaluationDate() != null) {
+            project.setEvaluationDate(updateDTO.getEvaluationDate());
+        }
+
+        project.setUpdateTime(LocalDateTime.now());
+        project.setUpdateBy("admin"); // TODO: 从上下文获取
+
+        projectMapper.updateById(project);
+        log.info("更新项目成功: id={}", id);
+    }
+
+    @Override
+    @Transactional
+    public Long copy(Long id) {
+        // 查询原项目
+        Project original = projectMapper.selectById(id);
+        if (original == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "项目不存在");
+        }
+
+        // 创建副本
+        Project copy = new Project();
+        copy.setProjectName(original.getProjectName() + "_副本");
+        copy.setCustomerName(original.getCustomerName());
+        copy.setSourceSystemId(original.getSourceSystemId());
+        copy.setTargetSystemId(original.getTargetSystemId());
+        copy.setProjectLeader(original.getProjectLeader());
+        copy.setContact(original.getContact());
+        copy.setDescription(original.getDescription());
+        copy.setEvaluationDate(original.getEvaluationDate());
+        copy.setStatus(STATUS_DRAFT);
+        copy.setUserId(1L); // TODO: 从上下文获取当前用户ID
+        copy.setCreateTime(LocalDateTime.now());
+        copy.setCreateBy("admin"); // TODO: 从上下文获取
+
+        projectMapper.insert(copy);
+        log.info("复制项目成功: 原项目id={}, 新项目id={}, name={}", id, copy.getId(), copy.getProjectName());
+
+        return copy.getId();
+    }
+
+    @Override
+    @Transactional
+    public void delete(Long id) {
+        // 查询项目
+        Project project = projectMapper.selectById(id);
+        if (project == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "项目不存在");
+        }
+
+        // 只有草稿状态可以删除
+        if (!STATUS_DRAFT.equals(project.getStatus())) {
+            throw new BusinessException(ResultCode.PROJECT_NOT_DRAFT);
+        }
+
+        // 软删除（MyBatis-Plus自动处理）
+        projectMapper.deleteById(id);
+        log.info("删除项目成功: id={}, name={}", id, project.getProjectName());
+    }
+
+    @Override
+    @Transactional
+    public void archive(Long id) {
+        // 查询项目
+        Project project = projectMapper.selectById(id);
+        if (project == null) {
+            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "项目不存在");
+        }
+
+        // 只有已完成状态可以归档
+        if (!STATUS_COMPLETED.equals(project.getStatus())) {
+            throw new BusinessException(ResultCode.PARAM_INVALID, "只有已完成的项目可以归档");
+        }
+
+        // 更新状态为已归档
+        project.setStatus(STATUS_ARCHIVED);
+        project.setUpdateTime(LocalDateTime.now());
+        project.setUpdateBy("admin"); // TODO: 从上下文获取
+
+        projectMapper.updateById(project);
+        log.info("归档项目成功: id={}, name={}", id, project.getProjectName());
     }
 }

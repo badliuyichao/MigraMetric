@@ -339,6 +339,205 @@ class DataVolumeLadderServiceTest {
     }
 
     @Test
+    @DisplayName("根据数据量匹配阶梯 - 空数据量返回null (LM-DV-005)")
+    void testMatchByVolumeNull() {
+        // Given - 无需stub，因为service层在volume==null时直接返回null，不调用mapper
+        // When
+        DataVolumeLadderVO result = ladderService.matchByVolume(null);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 阶梯无数据返回null (LM-DV-006)")
+    void testMatchByVolumeNoLadders() {
+        // Given
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList());
+
+        // When
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("500"));
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 精确匹配下限边界 (LM-DV-001)")
+    void testMatchByVolumeExactMinBoundary() {
+        // Given - 阶梯配置：中型 100-1000万
+        DataVolumeLadder ladder1 = new DataVolumeLadder();
+        ladder1.setId(1L);
+        ladder1.setLadderName("小型");
+        ladder1.setMinVolume(new BigDecimal("0"));
+        ladder1.setMaxVolume(new BigDecimal("100"));
+        ladder1.setWeight(new BigDecimal("0.80"));
+        ladder1.setSortOrder(1);
+
+        DataVolumeLadder ladder2 = new DataVolumeLadder();
+        ladder2.setId(2L);
+        ladder2.setLadderName("中型");
+        ladder2.setMinVolume(new BigDecimal("100"));
+        ladder2.setMaxVolume(new BigDecimal("1000"));
+        ladder2.setWeight(new BigDecimal("1.00"));
+        ladder2.setSortOrder(2);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder1, ladder2));
+
+        // When - 100万正好匹配中型阶梯下限
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("100"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals("中型", result.getLadderName());
+        assertEquals(new BigDecimal("1.00"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 精确匹配上限边界 (LM-DV-002)")
+    void testMatchByVolumeExactMaxBoundary() {
+        // Given - 阶梯配置：中型 100-1000万
+        DataVolumeLadder ladder = new DataVolumeLadder();
+        ladder.setId(2L);
+        ladder.setLadderName("中型");
+        ladder.setMinVolume(new BigDecimal("100"));
+        ladder.setMaxVolume(new BigDecimal("1000"));
+        ladder.setWeight(new BigDecimal("1.00"));
+        ladder.setSortOrder(2);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 999万在100-1000万范围内（小于上限）
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("999"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals("中型", result.getLadderName());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 超出最大阶梯范围 (LM-DV-003)")
+    void testMatchByVolumeExceedMax() {
+        // Given
+        DataVolumeLadder ladder = new DataVolumeLadder();
+        ladder.setId(4L);
+        ladder.setLadderName("超大型");
+        ladder.setMinVolume(new BigDecimal("1000"));
+        ladder.setMaxVolume(null); // 无上限
+        ladder.setWeight(new BigDecimal("2.00"));
+        ladder.setSortOrder(4);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 2000万超出1000万，应匹配无上限阶梯
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("2000"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals("超大型", result.getLadderName());
+        assertEquals(new BigDecimal("2.00"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 小于最小阶梯范围 (LM-DV-004)")
+    void testMatchByVolumeBelowMin() {
+        // Given
+        DataVolumeLadder ladder = new DataVolumeLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("小型");
+        ladder.setMinVolume(new BigDecimal("0"));
+        ladder.setMaxVolume(new BigDecimal("10"));
+        ladder.setWeight(new BigDecimal("0.80"));
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 5万应匹配小型（0-10万）
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("5"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals("小型", result.getLadderName());
+        assertEquals(new BigDecimal("0.80"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 阶梯系数精度验证 (LM-EX-003)")
+    void testMatchByVolumePrecision() {
+        // Given
+        DataVolumeLadder ladder = new DataVolumeLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("中型");
+        ladder.setMinVolume(new BigDecimal("100"));
+        ladder.setMaxVolume(new BigDecimal("1000"));
+        ladder.setWeight(new BigDecimal("1.5678")); // 4位小数精度
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("500"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals(new BigDecimal("1.5678"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 阶梯范围重叠处理 (LM-EX-005)")
+    void testMatchByVolumeOverlappingRanges() {
+        // Given - 阶梯范围重叠
+        DataVolumeLadder ladder1 = new DataVolumeLadder();
+        ladder1.setId(1L);
+        ladder1.setLadderName("小型");
+        ladder1.setMinVolume(new BigDecimal("0"));
+        ladder1.setMaxVolume(new BigDecimal("100"));
+        ladder1.setWeight(new BigDecimal("0.80"));
+        ladder1.setSortOrder(1);
+
+        DataVolumeLadder ladder2 = new DataVolumeLadder();
+        ladder2.setId(2L);
+        ladder2.setLadderName("中型");
+        ladder2.setMinVolume(new BigDecimal("99")); // 与小型重叠
+        ladder2.setMaxVolume(new BigDecimal("1000"));
+        ladder2.setWeight(new BigDecimal("1.00"));
+        ladder2.setSortOrder(2);
+
+        // 按sortOrder排序后，100万应匹配第一个能覆盖的阶梯（小型）
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder1, ladder2));
+
+        // When - 100万在小型范围内
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("100"));
+
+        // Then - 按顺序匹配，100万小于小型上限100，不能匹配小型
+        // 100万正好等于中型下限99，应匹配中型
+        assertNotNull(result);
+        assertEquals("中型", result.getLadderName());
+    }
+
+    @Test
+    @DisplayName("根据数据量匹配阶梯 - 数据量0匹配 (LM-EX-006)")
+    void testMatchByVolumeZero() {
+        // Given
+        DataVolumeLadder ladder = new DataVolumeLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("小型");
+        ladder.setMinVolume(new BigDecimal("0"));
+        ladder.setMaxVolume(new BigDecimal("10"));
+        ladder.setWeight(new BigDecimal("0.80"));
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 0万应匹配小型（0<=0<10）
+        DataVolumeLadderVO result = ladderService.matchByVolume(new BigDecimal("0"));
+
+        // Then
+        assertNotNull(result);
+        assertEquals("小型", result.getLadderName());
+    }
+
+    @Test
     @DisplayName("无上限阶梯的范围文本")
     void testVolumeRangeTextNoUpperLimit() {
         // Given
@@ -349,5 +548,19 @@ class DataVolumeLadderServiceTest {
 
         // Then
         assertEquals("0万-10万条", vo.getVolumeRangeText());
+    }
+
+    @Test
+    @DisplayName("无上限阶梯的范围文本 - null上限")
+    void testVolumeRangeTextNullUpperLimit() {
+        // Given
+        mockLadder.setMaxVolume(null);
+        when(ladderMapper.selectById(1L)).thenReturn(mockLadder);
+
+        // When
+        DataVolumeLadderVO vo = ladderService.getById(1L);
+
+        // Then
+        assertEquals("0万条以上", vo.getVolumeRangeText());
     }
 }

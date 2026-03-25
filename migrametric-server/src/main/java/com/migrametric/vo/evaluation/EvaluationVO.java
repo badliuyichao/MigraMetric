@@ -51,6 +51,12 @@ public class EvaluationVO implements Serializable {
     private String dataVolumeLadderName;
 
     /**
+     * 数据量阶梯系数
+     */
+    @Schema(description = "数据量阶梯系数")
+    private BigDecimal dataVolumeWeight;
+
+    /**
      * 用户数量
      */
     @Schema(description = "用户数量")
@@ -61,6 +67,12 @@ public class EvaluationVO implements Serializable {
      */
     @Schema(description = "用户数阶梯名称")
     private String userCountLadderName;
+
+    /**
+     * 用户数阶梯系数
+     */
+    @Schema(description = "用户数阶梯系数")
+    private BigDecimal userCountWeight;
 
     /**
      * 报表数量

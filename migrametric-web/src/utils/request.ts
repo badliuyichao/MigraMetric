@@ -40,6 +40,11 @@ service.interceptors.request.use(
 // 响应拦截器
 service.interceptors.response.use(
   (response: AxiosResponse<ApiResponse<unknown>>) => {
+    // 如果responseType是blob，直接返回
+    if (response.config.responseType === 'blob') {
+      return response
+    }
+
     const res = response.data
 
     // 判断业务逻辑是否成功
@@ -167,3 +172,102 @@ export interface PageResponse<T> {
   hasPrevious: boolean
   hasNext: boolean
 }
+
+// ========== 增强功能 ==========
+
+// 请求缓存
+const requestCache = new Map<string, { promise: Promise<unknown>; timestamp: number }>()
+const CACHE_TTL = 5000 // 缓存5秒
+
+/**
+ * 清除请求缓存
+ */
+export function clearRequestCache() {
+  requestCache.clear()
+}
+
+/**
+ * 清除指定URL的缓存
+ */
+export function clearUrlCache(url: string) {
+  requestCache.delete(url)
+}
+
+/**
+ * 带缓存的请求方法
+ * 适用于频繁请求的数据（如下拉选项）
+ */
+export const cachedRequest = {
+  async get<T>(url: string, params?: Record<string, unknown>, config?: AxiosRequestConfig): Promise<T> {
+    const cacheKey = `${url}?${JSON.stringify(params || {})}`
+    const now = Date.now()
+
+    // 检查缓存
+    const cached = requestCache.get(cacheKey)
+    if (cached && now - cached.timestamp < CACHE_TTL) {
+      return cached.promise as Promise<T>
+    }
+
+    // 创建新请求
+    const promise = service.get<ApiResponse<T>>(url, { params, ...config }).then(res => {
+      requestCache.delete(cacheKey) // 请求完成后清除缓存
+      return res.data.data
+    })
+
+    // 存入缓存
+    requestCache.set(cacheKey, { promise, timestamp: now })
+
+    return promise
+  }
+}
+
+/**
+ * 防抖请求
+ * 适用于搜索等高频请求场景
+ */
+export function debounceRequest<T>(
+  fn: (...args: unknown[]) => Promise<T>,
+  delay = 300
+): (...args: unknown[]) => Promise<T | null> {
+  let timer: ReturnType<typeof setTimeout> | null = null
+
+  return (...args: unknown[]): Promise<T | null> => {
+    return new Promise((resolve) => {
+      if (timer) {
+        clearTimeout(timer)
+      }
+
+      timer = setTimeout(async () => {
+        try {
+          const result = await fn(...args)
+          resolve(result)
+        } catch {
+          resolve(null)
+        }
+      }, delay)
+    })
+  }
+}
+
+// ========== 错误码定义 ==========
+export const ErrorCodes = {
+  SUCCESS: 200,
+  UNAUTHORIZED: 401,
+  FORBIDDEN: 403,
+  NOT_FOUND: 404,
+  BAD_REQUEST: 400,
+  INTERNAL_ERROR: 500,
+  SERVICE_UNAVAILABLE: 503,
+  GATEWAY_TIMEOUT: 504
+} as const
+
+// 错误消息映射
+export const ErrorMessages: Record<number, string> = {
+  [ErrorCodes.BAD_REQUEST]: '请求参数错误',
+  [ErrorCodes.UNAUTHORIZED]: '登录状态已过期，请重新登录',
+  [ErrorCodes.FORBIDDEN]: '暂无权限访问该资源',
+  [ErrorCodes.NOT_FOUND]: '请求的资源不存在',
+  [ErrorCodes.INTERNAL_ERROR]: '服务器内部错误',
+  [ErrorCodes.SERVICE_UNAVAILABLE]: '服务暂不可用，请稍后重试',
+  [ErrorCodes.GATEWAY_TIMEOUT]: '请求超时，请稍后重试'
+} as const

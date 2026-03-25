@@ -3,6 +3,7 @@ package com.migrametric.service.project;
 import com.migrametric.common.PageResult;
 import com.migrametric.dto.project.ProjectCreateDTO;
 import com.migrametric.dto.project.ProjectQueryDTO;
+import com.migrametric.dto.project.ProjectUpdateDTO;
 import com.migrametric.vo.project.ProjectDetailVO;
 import com.migrametric.vo.project.ProjectVO;
 
@@ -44,4 +45,34 @@ public interface ProjectService {
      * @return 项目详情VO
      */
     ProjectDetailVO getProjectDetail(Long id);
+
+    /**
+     * 更新项目信息
+     *
+     * @param id 项目ID
+     * @param updateDTO 更新信息
+     */
+    void update(Long id, ProjectUpdateDTO updateDTO);
+
+    /**
+     * 复制项目（创建副本）
+     *
+     * @param id 原始项目ID
+     * @return 新项目ID
+     */
+    Long copy(Long id);
+
+    /**
+     * 删除项目（仅草稿状态可删除）
+     *
+     * @param id 项目ID
+     */
+    void delete(Long id);
+
+    /**
+     * 归档项目（仅已完成状态可归档）
+     *
+     * @param id 项目ID
+     */
+    void archive(Long id);
 }

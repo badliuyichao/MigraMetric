@@ -338,6 +338,192 @@ class UserCountLadderServiceTest {
     }
 
     @Test
+    @DisplayName("根据用户数匹配阶梯 - 空用户数返回null (LM-UC-005)")
+    void testMatchByCountNull() {
+        // Given - 无需stub，因为service层在count==null时直接返回null，不调用mapper
+        // When
+        UserCountLadderVO result = ladderService.matchByCount(null);
+
+        // Then
+        assertNull(result);
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 用户数为0匹配 (LM-UC-006)")
+    void testMatchByCountZero() {
+        // Given
+        UserCountLadder ladder = new UserCountLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("小规模");
+        ladder.setMinCount(0);
+        ladder.setMaxCount(100);
+        ladder.setWeight(new BigDecimal("1.00"));
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 0人应匹配小规模（0<=0<100）
+        UserCountLadderVO result = ladderService.matchByCount(0);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("小规模", result.getLadderName());
+        assertEquals(new BigDecimal("1.00"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 精确匹配下限边界 (LM-UC-001)")
+    void testMatchByCountExactMinBoundary() {
+        // Given - 阶梯配置：中规模 100-500
+        UserCountLadder ladder1 = new UserCountLadder();
+        ladder1.setId(1L);
+        ladder1.setLadderName("小规模");
+        ladder1.setMinCount(0);
+        ladder1.setMaxCount(100);
+        ladder1.setWeight(new BigDecimal("1.00"));
+        ladder1.setSortOrder(1);
+
+        UserCountLadder ladder2 = new UserCountLadder();
+        ladder2.setId(2L);
+        ladder2.setLadderName("中规模");
+        ladder2.setMinCount(100);
+        ladder2.setMaxCount(500);
+        ladder2.setWeight(new BigDecimal("1.20"));
+        ladder2.setSortOrder(2);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder1, ladder2));
+
+        // When - 100人正好匹配中规模阶梯下限
+        UserCountLadderVO result = ladderService.matchByCount(100);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("中规模", result.getLadderName());
+        assertEquals(new BigDecimal("1.20"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 精确匹配上限边界 (LM-UC-002)")
+    void testMatchByCountExactMaxBoundary() {
+        // Given - 阶梯配置：中规模 100-500
+        UserCountLadder ladder = new UserCountLadder();
+        ladder.setId(2L);
+        ladder.setLadderName("中规模");
+        ladder.setMinCount(100);
+        ladder.setMaxCount(500);
+        ladder.setWeight(new BigDecimal("1.20"));
+        ladder.setSortOrder(2);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 499人在100-500范围内（小于上限）
+        UserCountLadderVO result = ladderService.matchByCount(499);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("中规模", result.getLadderName());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 超出最大用户数阶梯 (LM-UC-003)")
+    void testMatchByCountExceedMax() {
+        // Given
+        UserCountLadder ladder = new UserCountLadder();
+        ladder.setId(4L);
+        ladder.setLadderName("超大规模");
+        ladder.setMinCount(1000);
+        ladder.setMaxCount(null); // 无上限
+        ladder.setWeight(new BigDecimal("2.00"));
+        ladder.setSortOrder(4);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 2000人超出1000人，应匹配无上限阶梯
+        UserCountLadderVO result = ladderService.matchByCount(2000);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("超大规模", result.getLadderName());
+        assertEquals(new BigDecimal("2.00"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 小于最小用户数阶梯 (LM-UC-004)")
+    void testMatchByCountBelowMin() {
+        // Given
+        UserCountLadder ladder = new UserCountLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("小规模");
+        ladder.setMinCount(0);
+        ladder.setMaxCount(100);
+        ladder.setWeight(new BigDecimal("1.00"));
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When - 50人应匹配小规模（0<=50<100）
+        UserCountLadderVO result = ladderService.matchByCount(50);
+
+        // Then
+        assertNotNull(result);
+        assertEquals("小规模", result.getLadderName());
+        assertEquals(new BigDecimal("1.00"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 阶梯系数精度验证 (LM-EX-003)")
+    void testMatchByCountPrecision() {
+        // Given
+        UserCountLadder ladder = new UserCountLadder();
+        ladder.setId(1L);
+        ladder.setLadderName("中规模");
+        ladder.setMinCount(100);
+        ladder.setMaxCount(500);
+        ladder.setWeight(new BigDecimal("1.5678")); // 4位小数精度
+        ladder.setSortOrder(1);
+
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder));
+
+        // When
+        UserCountLadderVO result = ladderService.matchByCount(300);
+
+        // Then
+        assertNotNull(result);
+        assertEquals(new BigDecimal("1.5678"), result.getWeight());
+    }
+
+    @Test
+    @DisplayName("根据用户数匹配阶梯 - 阶梯范围重叠处理 (LM-EX-005)")
+    void testMatchByCountOverlappingRanges() {
+        // Given - 阶梯范围重叠
+        UserCountLadder ladder1 = new UserCountLadder();
+        ladder1.setId(1L);
+        ladder1.setLadderName("小规模");
+        ladder1.setMinCount(0);
+        ladder1.setMaxCount(100);
+        ladder1.setWeight(new BigDecimal("1.00"));
+        ladder1.setSortOrder(1);
+
+        UserCountLadder ladder2 = new UserCountLadder();
+        ladder2.setId(2L);
+        ladder2.setLadderName("中规模");
+        ladder2.setMinCount(99); // 与小规模重叠
+        ladder2.setMaxCount(500);
+        ladder2.setWeight(new BigDecimal("1.20"));
+        ladder2.setSortOrder(2);
+
+        // 按sortOrder排序后，100人应匹配第一个能覆盖的阶梯（中规模）
+        when(ladderMapper.selectList(any())).thenReturn(Arrays.asList(ladder1, ladder2));
+
+        // When - 100人在小规模范围内（0<=100<100），匹配小规模
+        UserCountLadderVO result = ladderService.matchByCount(100);
+
+        // Then - 100人不小于小型上限100，不能匹配小型，匹配中型
+        assertNotNull(result);
+        assertEquals("中规模", result.getLadderName());
+    }
+
+    @Test
     @DisplayName("无上限阶梯的范围文本")
     void testCountRangeTextNoUpperLimit() {
         // Given

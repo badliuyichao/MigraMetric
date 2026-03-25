@@ -15,7 +15,14 @@
       "Bash(mvn compile:*)",
       "Bash(npx eslint:*)",
       "Bash(cat:*)",
-      "Bash(mvn surefire:test:*)"
+      "Bash(mvn surefire:test:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(mysql:*)",
+      "Bash(node_modules/.bin/vitest run:*)",
+      "Bash(ls:*)",
+      "Bash(mvn package:*)"
     ]
   }
 }

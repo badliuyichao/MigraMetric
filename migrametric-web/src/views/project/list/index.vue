@@ -35,6 +35,14 @@
 
       <!-- 数据表格 -->
       <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+        <template #empty>
+          <EmptyState description="暂无项目，请先创建项目">
+            <el-button type="primary" @click="router.push('/project/create')">
+              <el-icon><Plus /></el-icon>
+              创建项目
+            </el-button>
+          </EmptyState>
+        </template>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="projectName" label="项目名称" min-width="180">
           <template #default="{ row }">
@@ -55,11 +63,13 @@
         </el-table-column>
         <el-table-column prop="evaluationDate" label="评估日期" width="120" />
         <el-table-column prop="createTime" label="创建时间" width="160" />
-        <el-table-column label="操作" width="200" fixed="right">
+        <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
             <el-button type="primary" link @click="handleView(row)">查看</el-button>
             <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleEdit(row)">编辑</el-button>
             <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="handleDelete(row)">删除</el-button>
+            <el-button type="info" link @click="handleCopy(row)">复制</el-button>
+            <el-button v-if="row.status === 'COMPLETED'" type="success" link @click="handleArchive(row)">归档</el-button>
           </template>
         </el-table-column>
       </el-table>
@@ -84,8 +94,9 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import EmptyState from '@/components/common/EmptyState.vue'
 import type { ProjectVO, ProjectQuery } from '@/api/project/projects'
-import { queryProjectPage } from '@/api/project/projects'
+import { queryProjectPage, deleteProject, copyProject, archiveProject } from '@/api/project/projects'
 
 const router = useRouter()
 
@@ -183,12 +194,43 @@ async function handleDelete(row: ProjectVO) {
       cancelButtonText: '取消',
       type: 'warning'
     })
-    // TODO: 调用删除API
-    // await deleteProject(row.id)
+    await deleteProject(row.id)
     ElMessage.success('删除成功')
     loadData()
-  } catch {
-    // 用户取消
+  } catch (error) {
+    // 用户取消或删除失败
+  }
+}
+
+// 复制
+async function handleCopy(row: ProjectVO) {
+  try {
+    await ElMessageBox.confirm('确定要复制该项目吗？', '确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+    const _newId = await copyProject(row.id)
+    ElMessage.success('复制成功')
+    loadData()
+  } catch (error) {
+    // 用户取消或复制失败
+  }
+}
+
+// 归档
+async function handleArchive(row: ProjectVO) {
+  try {
+    await ElMessageBox.confirm('确定要归档该项目吗？归档后项目将变为只读状态', '确认', {
+      confirmButtonText: '确定',
+      cancelButtonText: '取消',
+      type: 'info'
+    })
+    await archiveProject(row.id)
+    ElMessage.success('归档成功')
+    loadData()
+  } catch (error) {
+    // 用户取消或归档失败
   }
 }
 

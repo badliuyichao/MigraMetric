@@ -4,6 +4,7 @@ import com.migrametric.common.PageResult;
 import com.migrametric.common.Result;
 import com.migrametric.dto.project.ProjectCreateDTO;
 import com.migrametric.dto.project.ProjectQueryDTO;
+import com.migrametric.dto.project.ProjectUpdateDTO;
 import com.migrametric.service.project.ProjectService;
 import com.migrametric.vo.project.ProjectDetailVO;
 import com.migrametric.vo.project.ProjectVO;
@@ -70,5 +71,54 @@ public class ProjectController {
             @PathVariable Long id) {
         ProjectDetailVO vo = projectService.getProjectDetail(id);
         return Result.success(vo);
+    }
+
+    /**
+     * 更新项目信息
+     */
+    @Operation(summary = "更新项目", description = "更新项目基本信息")
+    @PutMapping("/{id}")
+    public Result<Void> update(
+            @Parameter(description = "项目ID")
+            @PathVariable Long id,
+            @Valid @RequestBody ProjectUpdateDTO updateDTO) {
+        projectService.update(id, updateDTO);
+        return Result.success(null);
+    }
+
+    /**
+     * 复制项目
+     */
+    @Operation(summary = "复制项目", description = "创建项目的副本，副本状态为草稿")
+    @PostMapping("/{id}/copy")
+    public Result<Long> copy(
+            @Parameter(description = "项目ID")
+            @PathVariable Long id) {
+        Long newId = projectService.copy(id);
+        return Result.success(newId);
+    }
+
+    /**
+     * 删除项目
+     */
+    @Operation(summary = "删除项目", description = "删除项目，仅草稿状态可删除")
+    @DeleteMapping("/{id}")
+    public Result<Void> delete(
+            @Parameter(description = "项目ID")
+            @PathVariable Long id) {
+        projectService.delete(id);
+        return Result.success(null);
+    }
+
+    /**
+     * 归档项目
+     */
+    @Operation(summary = "归档项目", description = "归档项目，仅已完成状态可归档")
+    @PostMapping("/{id}/archive")
+    public Result<Void> archive(
+            @Parameter(description = "项目ID")
+            @PathVariable Long id) {
+        projectService.archive(id);
+        return Result.success(null);
     }
 }

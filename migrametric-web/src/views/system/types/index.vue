@@ -36,6 +36,14 @@
 
       <!-- 数据表格 -->
       <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+        <template #empty>
+          <EmptyState description="暂无系统类型，请先添加">
+            <el-button type="primary" @click="handleAdd">
+              <el-icon><Plus /></el-icon>
+              新增系统类型
+            </el-button>
+          </EmptyState>
+        </template>
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="systemName" label="系统名称" />
         <el-table-column prop="systemCategoryText" label="系统类型" width="120">
@@ -111,6 +119,7 @@
 <script setup lang="ts">
 import { ref, reactive, onMounted } from 'vue'
 import { ElMessage, ElMessageBox, FormInstance, FormRules } from 'element-plus'
+import EmptyState from '@/components/common/EmptyState.vue'
 import type { SystemTypeVO, SystemTypeQuery, SystemTypeCreate } from '@/api/system/types'
 import {
   querySystemTypePage,
