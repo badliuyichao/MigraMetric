@@ -18,6 +18,8 @@ import java.math.BigDecimal;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import com.migrametric.context.UserContext;
+
 /**
  * 报表配置服务实现类
  *
@@ -85,7 +87,7 @@ public class ReportConfigServiceImpl implements ReportConfigService {
         // 更新配置值
         config.setConfigValue(updateDTO.getConfigValue());
         config.setUpdateTime(LocalDateTime.now());
-        config.setUpdateBy("admin"); // TODO: 从上下文获取
+        config.setUpdateBy(UserContext.getCurrentUsername());
 
         configMapper.updateById(config);
     }

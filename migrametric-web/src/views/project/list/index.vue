@@ -183,7 +183,7 @@ function handleView(row: ProjectVO) {
 
 // 编辑
 function handleEdit(row: ProjectVO) {
-  router.push(`/project/detail/${row.id}`)
+  router.push(`/project/edit/${row.id}`)
 }
 
 // 删除

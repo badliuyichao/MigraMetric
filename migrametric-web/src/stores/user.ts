@@ -5,7 +5,7 @@ import { request } from '@/utils/request'
 export interface UserInfo {
   id: number
   username: string
-  userName: string
+  name: string
   role: string
   status: number
   email?: string
@@ -30,7 +30,7 @@ export const useUserStore = defineStore('user', () => {
 
   // Getters
   const isLoggedIn = computed(() => !!token.value)
-  const userName = computed(() => userInfo.value?.userName || userInfo.value?.username || '')
+  const userName = computed(() => userInfo.value?.name || userInfo.value?.username || '')
   const isAdmin = computed(() => userInfo.value?.role === 'ADMIN')
   const roles = computed(() => (userInfo.value?.role ? [userInfo.value.role] : []))
 

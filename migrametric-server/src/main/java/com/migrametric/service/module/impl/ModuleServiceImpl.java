@@ -19,6 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
+import com.migrametric.context.UserContext;
+
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.List;
@@ -106,7 +108,7 @@ public class ModuleServiceImpl implements ModuleService {
         module.setDescription(createDTO.getDescription());
         module.setStatus(STATUS_ENABLED);
         module.setCreateTime(LocalDateTime.now());
-        module.setCreateBy("admin"); // TODO: 从上下文获取
+        module.setCreateBy(UserContext.getCurrentUsername());
 
         moduleMapper.insert(module);
 
@@ -135,7 +137,7 @@ public class ModuleServiceImpl implements ModuleService {
         module.setDefaultWeight(updateDTO.getDefaultWeight());
         module.setDescription(updateDTO.getDescription());
         module.setUpdateTime(LocalDateTime.now());
-        module.setUpdateBy("admin"); // TODO: 从上下文获取
+        module.setUpdateBy(UserContext.getCurrentUsername());
 
         moduleMapper.updateById(module);
     }
@@ -165,7 +167,7 @@ public class ModuleServiceImpl implements ModuleService {
 
         module.setStatus(STATUS_ENABLED);
         module.setUpdateTime(LocalDateTime.now());
-        module.setUpdateBy("admin");
+        module.setUpdateBy(UserContext.getCurrentUsername());
 
         moduleMapper.updateById(module);
     }
@@ -179,7 +181,7 @@ public class ModuleServiceImpl implements ModuleService {
 
         module.setStatus(STATUS_DISABLED);
         module.setUpdateTime(LocalDateTime.now());
-        module.setUpdateBy("admin");
+        module.setUpdateBy(UserContext.getCurrentUsername());
 
         moduleMapper.updateById(module);
     }

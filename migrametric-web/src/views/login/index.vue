@@ -47,7 +47,7 @@
         </el-form-item>
       </el-form>
 
-      <div class="login-footer">
+      <div class="login-footer" v-if="isDev">
         <p>默认账号：admin / admin123</p>
       </div>
     </div>
@@ -66,6 +66,7 @@ const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 
+const isDev = import.meta.env.DEV
 const formRef = ref<FormInstance>()
 const loading = ref(false)
 

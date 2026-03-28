@@ -19,6 +19,8 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Objects;
 
+import com.migrametric.context.UserContext;
+
 /**
  * 数据量阶梯服务实现类
  *
@@ -72,7 +74,7 @@ public class DataVolumeLadderServiceImpl implements DataVolumeLadderService {
         ladder.setWeight(createDTO.getWeight());
         ladder.setSortOrder(sortOrder);
         ladder.setCreateTime(LocalDateTime.now());
-        ladder.setCreateBy("admin"); // TODO: 从上下文获取
+        ladder.setCreateBy(UserContext.getCurrentUsername());
 
         ladderMapper.insert(ladder);
 
@@ -97,7 +99,7 @@ public class DataVolumeLadderServiceImpl implements DataVolumeLadderService {
         ladder.setWeight(updateDTO.getWeight());
         ladder.setSortOrder(updateDTO.getSortOrder());
         ladder.setUpdateTime(LocalDateTime.now());
-        ladder.setUpdateBy("admin"); // TODO: 从上下文获取
+        ladder.setUpdateBy(UserContext.getCurrentUsername());
 
         ladderMapper.updateById(ladder);
     }
@@ -134,12 +136,12 @@ public class DataVolumeLadderServiceImpl implements DataVolumeLadderService {
         // 交换排序顺序
         ladder.setSortOrder(currentOrder - 1);
         ladder.setUpdateTime(LocalDateTime.now());
-        ladder.setUpdateBy("admin");
+        ladder.setUpdateBy(UserContext.getCurrentUsername());
         ladderMapper.updateById(ladder);
 
         prevLadder.setSortOrder(currentOrder);
         prevLadder.setUpdateTime(LocalDateTime.now());
-        prevLadder.setUpdateBy("admin");
+        prevLadder.setUpdateBy(UserContext.getCurrentUsername());
         ladderMapper.updateById(prevLadder);
     }
 
@@ -167,12 +169,12 @@ public class DataVolumeLadderServiceImpl implements DataVolumeLadderService {
         // 交换排序顺序
         ladder.setSortOrder(currentOrder + 1);
         ladder.setUpdateTime(LocalDateTime.now());
-        ladder.setUpdateBy("admin");
+        ladder.setUpdateBy(UserContext.getCurrentUsername());
         ladderMapper.updateById(ladder);
 
         nextLadder.setSortOrder(currentOrder);
         nextLadder.setUpdateTime(LocalDateTime.now());
-        nextLadder.setUpdateBy("admin");
+        nextLadder.setUpdateBy(UserContext.getCurrentUsername());
         ladderMapper.updateById(nextLadder);
     }
 

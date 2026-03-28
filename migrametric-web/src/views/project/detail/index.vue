@@ -277,8 +277,10 @@ async function handleCopy() {
     const newId = await copyProject(Number(route.params.id))
     ElMessage.success('复制成功')
     router.push(`/project/detail/${newId}`)
-  } catch {
-    // 用户取消或复制失败
+  } catch (error: any) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('复制失败')
+    }
   }
 }
 
@@ -295,8 +297,10 @@ async function handleArchive() {
     await archiveProject(Number(route.params.id))
     ElMessage.success('归档成功')
     loadProjectDetail()
-  } catch {
-    // 用户取消或归档失败
+  } catch (error: any) {
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('归档失败')
+    }
   }
 }
 
@@ -313,8 +317,11 @@ async function handleDelete() {
     await deleteProject(Number(route.params.id))
     ElMessage.success('删除成功')
     router.push('/project/list')
-  } catch {
-    // 用户取消或删除失败
+  } catch (error: any) {
+    // 区分用户取消和API错误
+    if (error !== 'cancel' && error !== 'close') {
+      ElMessage.error('删除失败')
+    }
   }
 }
 

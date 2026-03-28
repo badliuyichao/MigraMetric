@@ -228,8 +228,8 @@
                 <el-divider content-position="left">客开情况</el-divider>
                 <el-form-item label="是否有客开" required>
                   <el-radio-group v-model="metricsForm.hasCustomDev">
-                    <el-radio :label="false">无</el-radio>
-                    <el-radio :label="true">有</el-radio>
+                    <el-radio :value="false">无</el-radio>
+                    <el-radio :value="true">有</el-radio>
                   </el-radio-group>
                 </el-form-item>
 
@@ -269,9 +269,9 @@
                 </el-form-item>
                 <el-form-item label="数据清洗复杂度">
                   <el-radio-group v-model="metricsForm.dataCleanComplexity">
-                    <el-radio :label="1">简单</el-radio>
-                    <el-radio :label="2">中等</el-radio>
-                    <el-radio :label="3">复杂</el-radio>
+                    <el-radio :value="1">简单</el-radio>
+                    <el-radio :value="2">中等</el-radio>
+                    <el-radio :value="3">复杂</el-radio>
                   </el-radio-group>
                 </el-form-item>
               </el-form>

@@ -35,7 +35,7 @@ describe('User Store', () => {
       const mockUserInfo = {
         id: 1,
         username: 'admin',
-        userName: '管理员',
+        name: '管理员',
         role: 'ADMIN',
         status: 1
       }
@@ -66,7 +66,7 @@ describe('User Store', () => {
 
       // Set some state
       userStore.token = 'mock-token'
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
 
       // Logout
       userStore.logout()
@@ -81,11 +81,11 @@ describe('User Store', () => {
     it('should update user info', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
 
-      userStore.updateUserInfo({ userName: 'New Name' })
+      userStore.updateUserInfo({ name: 'New Name' })
 
-      expect(userStore.userInfo?.userName).toBe('New Name')
+      expect(userStore.userInfo?.name).toBe('New Name')
     })
   })
 
@@ -93,27 +93,27 @@ describe('User Store', () => {
     it('should return correct userName', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: '张三', role: 'USER', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: '张三', role: 'USER', status: 1 }
       expect(userStore.userName).toBe('张三')
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: '', role: 'USER', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: '', role: 'USER', status: 1 }
       expect(userStore.userName).toBe('admin')
     })
 
     it('should return isAdmin correctly', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
       expect(userStore.isAdmin).toBe(true)
 
-      userStore.userInfo = { id: 2, username: 'user', userName: 'User', role: 'USER', status: 1 }
+      userStore.userInfo = { id: 2, username: 'user', name: 'User', role: 'USER', status: 1 }
       expect(userStore.isAdmin).toBe(false)
     })
 
     it('should return roles array correctly', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
       expect(userStore.roles).toEqual(['ADMIN'])
     })
 
@@ -127,7 +127,7 @@ describe('User Store', () => {
     it('should return true when user has required role', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
       expect(userStore.hasRole(['ADMIN'])).toBe(true)
       expect(userStore.hasRole(['USER', 'ADMIN'])).toBe(true)
     })
@@ -135,14 +135,14 @@ describe('User Store', () => {
     it('should return false when user does not have required role', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'user', userName: 'User', role: 'USER', status: 1 }
+      userStore.userInfo = { id: 1, username: 'user', name: 'User', role: 'USER', status: 1 }
       expect(userStore.hasRole(['ADMIN'])).toBe(false)
     })
 
     it('should return true for admin with any role', () => {
       const userStore = useUserStore()
 
-      userStore.userInfo = { id: 1, username: 'admin', userName: 'Admin', role: 'ADMIN', status: 1 }
+      userStore.userInfo = { id: 1, username: 'admin', name: 'Admin', role: 'ADMIN', status: 1 }
       expect(userStore.hasRole(['ANY_ROLE'])).toBe(true)
     })
   })

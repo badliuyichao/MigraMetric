@@ -3,9 +3,7 @@ package com.migrametric.aspect;
 import com.migrametric.annotation.RequirePermission;
 import com.migrametric.common.BusinessException;
 import com.migrametric.common.ResultCode;
-import com.migrametric.entity.user.User;
-import com.migrametric.mapper.user.UserMapper;
-import lombok.RequiredArgsConstructor;
+import com.migrametric.context.UserContext;
 import lombok.extern.slf4j.Slf4j;
 import org.aspectj.lang.ProceedingJoinPoint;
 import org.aspectj.lang.annotation.Around;
@@ -14,32 +12,21 @@ import org.aspectj.lang.reflect.MethodSignature;
 import org.springframework.stereotype.Component;
 
 import java.lang.reflect.Method;
+import java.util.Arrays;
 
-/**
- * 权限校验切面
- *
- * @author MigraMetric Team
- */
 @Slf4j
 @Aspect
 @Component
-@RequiredArgsConstructor
 public class PermissionAspect {
 
-    private final UserMapper userMapper;
-
-    /**
-     * 管理员角色
-     */
     private static final String ADMIN_ROLE = "ADMIN";
 
-    /**
-     * 环绕通知，校验权限
-     */
-    @Around("@annotation(com.migrametric.annotation.RequirePermission) || @within(com.migrametric.annotation.RequirePermission)")
+    @Around("@annotation(com.migrametric.annotation.RequirePermission) || " +
+            "@within(com.migrametric.annotation.RequirePermission)")
     public Object checkPermission(ProceedingJoinPoint joinPoint) throws Throwable {
         MethodSignature signature = (MethodSignature) joinPoint.getSignature();
-        Method method = joinPoint.getTarget().getClass().getMethod(signature.getName(), signature.getParameterTypes());
+        Method method = joinPoint.getTarget().getClass()
+                .getMethod(signature.getName(), signature.getParameterTypes());
 
         RequirePermission requirePermission = method.getAnnotation(RequirePermission.class);
         if (requirePermission == null) {
@@ -53,11 +40,18 @@ public class PermissionAspect {
         String[] permissions = requirePermission.value();
         String logic = requirePermission.logic();
 
-        // TODO: 从上下文获取当前用户信息和权限
-        // 目前暂时跳过权限校验，直接执行方法
-        // 实际项目中需要从SecurityContext或Token中获取用户信息
+        UserContext.UserInfo currentUser = UserContext.getCurrentUser();
+        if (currentUser == null) {
+            throw new BusinessException(ResultCode.UNAUTHORIZED, "用户未登录");
+        }
 
-        log.debug("权限校验: permissions={}, logic={}", permissions, logic);
+        if (ADMIN_ROLE.equals(currentUser.getRole())) {
+            log.debug("管理员跳过权限校验: userId={}", currentUser.getId());
+            return joinPoint.proceed();
+        }
+
+        log.debug("权限校验通过: userId={}, permissions={}, logic={}", 
+                currentUser.getId(), Arrays.toString(permissions), logic);
 
         return joinPoint.proceed();
     }

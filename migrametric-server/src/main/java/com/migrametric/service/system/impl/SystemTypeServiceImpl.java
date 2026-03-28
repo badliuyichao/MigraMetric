@@ -18,6 +18,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+
+import com.migrametric.context.UserContext;
 import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -103,7 +105,7 @@ public class SystemTypeServiceImpl implements SystemTypeService {
         systemType.setDescription(createDTO.getDescription());
         systemType.setStatus(STATUS_ENABLED);
         systemType.setCreateTime(LocalDateTime.now());
-        systemType.setCreateBy("admin"); // TODO: 从上下文获取
+        systemType.setCreateBy(UserContext.getCurrentUsername());
         systemType.setRemark(createDTO.getRemark());
 
         systemTypeMapper.insert(systemType);
@@ -130,7 +132,7 @@ public class SystemTypeServiceImpl implements SystemTypeService {
         systemType.setSystemCategory(updateDTO.getSystemCategory());
         systemType.setDescription(updateDTO.getDescription());
         systemType.setUpdateTime(LocalDateTime.now());
-        systemType.setUpdateBy("admin"); // TODO: 从上下文获取
+        systemType.setUpdateBy(UserContext.getCurrentUsername());
         systemType.setRemark(updateDTO.getRemark());
 
         systemTypeMapper.updateById(systemType);
@@ -171,7 +173,7 @@ public class SystemTypeServiceImpl implements SystemTypeService {
 
         systemType.setStatus(STATUS_ENABLED);
         systemType.setUpdateTime(LocalDateTime.now());
-        systemType.setUpdateBy("admin");
+        systemType.setUpdateBy(UserContext.getCurrentUsername());
 
         systemTypeMapper.updateById(systemType);
     }
@@ -185,7 +187,7 @@ public class SystemTypeServiceImpl implements SystemTypeService {
 
         systemType.setStatus(STATUS_DISABLED);
         systemType.setUpdateTime(LocalDateTime.now());
-        systemType.setUpdateBy("admin");
+        systemType.setUpdateBy(UserContext.getCurrentUsername());
 
         systemTypeMapper.updateById(systemType);
     }

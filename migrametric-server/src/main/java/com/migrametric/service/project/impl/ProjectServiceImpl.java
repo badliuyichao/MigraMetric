@@ -24,8 +24,15 @@ import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
 
 import java.time.LocalDateTime;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
+import com.migrametric.context.UserContext;
 import com.migrametric.dto.project.ProjectUpdateDTO;
 
 /**
@@ -87,9 +94,9 @@ public class ProjectServiceImpl implements ProjectService {
         project.setDescription(createDTO.getDescription());
         project.setEvaluationDate(createDTO.getEvaluationDate());
         project.setStatus(STATUS_DRAFT);
-        project.setUserId(1L); // TODO: 从上下文获取当前用户ID
+        project.setUserId(UserContext.getCurrentUserId());
         project.setCreateTime(LocalDateTime.now());
-        project.setCreateBy("admin"); // TODO: 从上下文获取
+        project.setCreateBy(UserContext.getCurrentUsername());
 
         projectMapper.insert(project);
         log.info("创建项目成功: id={}, name={}", project.getId(), project.getProjectName());
@@ -137,9 +144,20 @@ public class ProjectServiceImpl implements ProjectService {
         IPage<Project> page = new Page<>(pageNum, pageSize);
         IPage<Project> result = projectMapper.selectPage(page, wrapper);
 
+        // 批量查询系统信息（解决N+1问题）
+        Set<Long> systemIds = result.getRecords().stream()
+                .flatMap(p -> Stream.of(p.getSourceSystemId(), p.getTargetSystemId()))
+                .filter(Objects::nonNull)
+                .collect(Collectors.toSet());
+
+        Map<Long, SystemType> systemMap = systemIds.isEmpty()
+                ? Collections.emptyMap()
+                : systemTypeMapper.selectBatchIds(systemIds).stream()
+                        .collect(Collectors.toMap(SystemType::getId, s -> s));
+
         // 转换为VO
         List<ProjectVO> voList = result.getRecords().stream()
-                .map(this::convertToVO)
+                .map(p -> convertToVO(p, systemMap))
                 .toList();
 
         return new PageResult<>(voList, result.getTotal(), pageNum, pageSize);
@@ -232,7 +250,46 @@ public class ProjectServiceImpl implements ProjectService {
     }
 
     /**
-     * 转换为VO
+     * 转换为VO（使用预查询的Map，解决N+1问题）
+     */
+    private ProjectVO convertToVO(Project project, Map<Long, SystemType> systemMap) {
+        ProjectVO vo = new ProjectVO();
+        vo.setId(project.getId());
+        vo.setProjectName(project.getProjectName());
+        vo.setCustomerName(project.getCustomerName());
+        vo.setSourceSystemId(project.getSourceSystemId());
+        vo.setTargetSystemId(project.getTargetSystemId());
+        vo.setProjectLeader(project.getProjectLeader());
+        vo.setContact(project.getContact());
+        vo.setDescription(project.getDescription());
+        vo.setEvaluationDate(project.getEvaluationDate());
+        vo.setStatus(project.getStatus());
+        vo.setStatusText(getStatusText(project.getStatus()));
+        vo.setUserId(project.getUserId());
+        vo.setCreateTime(project.getCreateTime());
+        vo.setUpdateTime(project.getUpdateTime());
+        vo.setCreateByName(project.getCreateBy());
+
+        // 从Map获取系统名称
+        if (project.getSourceSystemId() != null) {
+            SystemType sourceSystem = systemMap.get(project.getSourceSystemId());
+            if (sourceSystem != null) {
+                vo.setSourceSystemName(sourceSystem.getSystemName());
+            }
+        }
+
+        if (project.getTargetSystemId() != null) {
+            SystemType targetSystem = systemMap.get(project.getTargetSystemId());
+            if (targetSystem != null) {
+                vo.setTargetSystemName(targetSystem.getSystemName());
+            }
+        }
+
+        return vo;
+    }
+
+    /**
+     * 转换为VO（单条查询使用）
      */
     private ProjectVO convertToVO(Project project) {
         ProjectVO vo = new ProjectVO();
@@ -356,7 +413,7 @@ public class ProjectServiceImpl implements ProjectService {
         }
 
         project.setUpdateTime(LocalDateTime.now());
-        project.setUpdateBy("admin"); // TODO: 从上下文获取
+        project.setUpdateBy(UserContext.getCurrentUsername());
 
         projectMapper.updateById(project);
         log.info("更新项目成功: id={}", id);
@@ -382,9 +439,9 @@ public class ProjectServiceImpl implements ProjectService {
         copy.setDescription(original.getDescription());
         copy.setEvaluationDate(original.getEvaluationDate());
         copy.setStatus(STATUS_DRAFT);
-        copy.setUserId(1L); // TODO: 从上下文获取当前用户ID
+        copy.setUserId(UserContext.getCurrentUserId());
         copy.setCreateTime(LocalDateTime.now());
-        copy.setCreateBy("admin"); // TODO: 从上下文获取
+        copy.setCreateBy(UserContext.getCurrentUsername());
 
         projectMapper.insert(copy);
         log.info("复制项目成功: 原项目id={}, 新项目id={}, name={}", id, copy.getId(), copy.getProjectName());
@@ -428,7 +485,7 @@ public class ProjectServiceImpl implements ProjectService {
         // 更新状态为已归档
         project.setStatus(STATUS_ARCHIVED);
         project.setUpdateTime(LocalDateTime.now());
-        project.setUpdateBy("admin"); // TODO: 从上下文获取
+        project.setUpdateBy(UserContext.getCurrentUsername());
 
         projectMapper.updateById(project);
         log.info("归档项目成功: id={}, name={}", id, project.getProjectName());
