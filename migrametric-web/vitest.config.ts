@@ -6,13 +6,39 @@ export default defineConfig({
   plugins: [vue()],
   test: {
     globals: true,
-    environment: 'jsdom',
-    include: ['src/**/*.{test,spec}.{js,mjs,cjs,ts,mts,jsx,tsx}'],
-    coverage: {
-      provider: 'v8',
-      reporter: ['text', 'json', 'html'],
-      exclude: ['node_modules/**', 'dist/**', '*.config.*']
-    }
+
+    // 多项目配置：分离不同测试类型
+    projects: [
+      // 默认项目：单元测试
+      {
+        test: {
+          name: 'unit',
+          include: ['src/**/*.test.ts'],
+          exclude: ['src/**/*.interaction.test.ts'],
+          environment: 'jsdom',
+          coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            exclude: ['node_modules/**', 'dist/**', '*.config.*']
+          }
+        }
+      },
+      // 组件交互测试项目
+      {
+        test: {
+          name: 'interaction',
+          include: ['src/**/*.interaction.test.ts'],
+          environment: 'jsdom',
+          setupFiles: ['./tests/setup/component-setup.ts'],
+          testTimeout: 10000,
+          coverage: {
+            provider: 'v8',
+            reporter: ['text', 'json', 'html'],
+            exclude: ['node_modules/**', 'dist/**', '*.config.*', 'tests/**']
+          }
+        }
+      }
+    ]
   },
   resolve: {
     alias: {
