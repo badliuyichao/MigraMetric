@@ -12,8 +12,16 @@
     "lint:style": "prettier --write \"src/**/*.{js,jsx,ts,tsx,vue,css,scss,less,html,json}\"",
     "type-check": "vue-tsc --noEmit",
     "test": "vitest",
-    "test:unit": "vitest run",
+    "test:unit": "vitest --project=unit",
+    "test:interaction": "vitest --project=interaction",
+    "test:e2e": "playwright test --project=e2e",
+    "test:visual": "playwright test --project=visual",
+    "test:all": "vitest --run",
     "test:coverage": "vitest run --coverage",
+    "playwright:test": "playwright test",
+    "playwright:ui": "playwright test --ui",
+    "playwright:debug": "playwright test --debug",
+    "playwright:report": "playwright show-report",
     "prepare": "husky install"
   },
   "dependencies": {
