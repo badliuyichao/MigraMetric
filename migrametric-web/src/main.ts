@@ -21,10 +21,9 @@ for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
 // 创建Pinia实例
 const pinia = createPinia()
 
-// 使用插件
 app.use(pinia)
 app.use(router)
-setupPermission(app)
+setupPermission(app, router)
 app.use(ElementPlus, {
   locale: zhCn,
   size: 'default'

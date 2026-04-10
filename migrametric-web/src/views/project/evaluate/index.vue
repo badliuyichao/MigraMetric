@@ -518,24 +518,34 @@ async function loadProjectInfo() {
     }
 
     projectId.value = id
+
+    // 获取项目详情
+    console.log('开始加载项目详情, id:', id)
     const detail = await getProjectDetail(id) as ProjectDetailVO
+    console.log('项目详情加载成功:', detail)
 
     projectName.value = detail.projectName || ''
     customerName.value = detail.customerName || ''
-    sourceSystemName.value = (detail as any).sourceSystemName || ''
-    targetSystemName.value = (detail as any).targetSystemName || ''
+    sourceSystemName.value = detail.sourceSystemName || ''
+    targetSystemName.value = detail.targetSystemName || ''
     projectLeader.value = detail.projectLeader || ''
-    evaluationDate.value = (detail as any).evaluationDate || ''
+    evaluationDate.value = detail.evaluationDate || ''
+
+    // 获取评估信息
+    console.log('开始获取评估信息, projectId:', id)
+    const evaluation = await getEvaluation(id)
+    console.log('评估信息:', evaluation)
 
     // 如果没有评估记录，创建评估
-    const evaluation = await getEvaluation(id)
-    if (!evaluation.id) {
+    if (!evaluation || !evaluation.id) {
+      console.log('创建评估记录')
       await createEvaluation(id)
     }
 
     // 加载已有评估数据
     await loadExistingEvaluation(id)
-  } catch {
+  } catch (error) {
+    console.error('加载项目信息失败:', error)
     ElMessage.error('加载项目信息失败')
     router.push('/project/list')
   } finally {
@@ -548,11 +558,13 @@ async function loadProjectInfo() {
  */
 async function loadExistingEvaluation(projectId: number) {
   try {
+    console.log('开始加载已有评估数据, projectId:', projectId)
     const evaluation = await getEvaluation(projectId)
+    console.log('已有评估数据:', evaluation)
     if (evaluation && evaluation.tableCount != null) {
       // 填充指标表单
       metricsForm.tableCount = evaluation.tableCount
-      metricsForm.dataVolume = evaluation.dataVolume as any
+      metricsForm.dataVolume = evaluation.dataVolume ?? null
       metricsForm.dataVolumeLadderId = evaluation.dataVolumeLadderId ?? null
       metricsForm.dataVolumeLadderName = evaluation.dataVolumeLadderName ?? null
       metricsForm.dataVolumeWeight = evaluation.dataVolumeWeight ?? null
@@ -563,7 +575,7 @@ async function loadExistingEvaluation(projectId: number) {
       metricsForm.reportCount = evaluation.reportCount ?? null
       metricsForm.hasCustomDev = evaluation.hasCustomDev ?? false
       metricsForm.customDevCount = evaluation.customDevCount ?? null
-      metricsForm.customDevWorkload = evaluation.customDevWorkload as any
+      metricsForm.customDevWorkload = evaluation.customDevWorkload ?? null
       metricsForm.dataCleanDesc = evaluation.dataCleanDesc ?? ''
       metricsForm.dataCleanComplexity = evaluation.dataCleanComplexityText ? 2 : undefined
 

@@ -1,103 +1,103 @@
 # CLAUDE.md
 
-This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
+本文件为 Claude Code (claude.ai/code) 提供代码库工作指南。
 
-## Project Overview
+## 项目概述
 
-MigraMetric is a full-stack web application for evaluating enterprise heterogeneous system migration workloads. It helps enterprises estimate migration costs and timelines by analyzing system architecture, functional modules, and technology stacks.
+MigraMetric 是一个全栈 Web 应用，用于评估企业异构系统迁移工作量。通过分析系统架构、功能模块和技术栈，帮助企业估算迁移成本和时间周期。
 
-## Environment Requirements
+## 环境要求
 
 - Java 17+ / Maven 3.8+
 - Node.js 18+ / pnpm 8+
 - MySQL 8.0
 
-## Development Commands
+## 开发命令
 
-### Backend (migrametric-server)
+### 后端 (migrametric-server)
 ```bash
 cd migrametric-server
-mvn spring-boot:run              # Start dev server (port 8080)
-mvn test                          # Run all tests
-mvn test -Dtest=ClassName        # Run specific test class
-mvn test jacoco:report            # Generate coverage report
-mvn clean package -DskipTests     # Build JAR
+mvn spring-boot:run              # 启动开发服务器 (端口 8080)
+mvn test                          # 运行所有测试
+mvn test -Dtest=ClassName        # 运行指定测试类
+mvn test jacoco:report            # 生成覆盖率报告
+mvn clean package -DskipTests     # 构建 JAR 包
 ```
 
-### Frontend (migrametric-web)
+### 前端 (migrametric-web)
 ```bash
 cd migrametric-web
-pnpm install                      # Install dependencies
-pnpm dev                         # Start dev server (port 3000, opens browser)
-pnpm build                       # Production build
-pnpm lint                        # ESLint check + auto-fix
-pnpm type-check                  # TypeScript type checking
-pnpm test:unit                    # Run tests (single run)
-pnpm test:coverage               # Generate coverage report
+pnpm install                      # 安装依赖
+pnpm dev                         # 启动开发服务器 (端口 3000，自动打开浏览器)
+pnpm build                       # 生产环境构建
+pnpm lint                        # ESLint 检查并自动修复
+pnpm type-check                  # TypeScript 类型检查
+pnpm test:unit                    # 运行单元测试 (单次执行)
+pnpm test:coverage               # 生成覆盖率报告
 ```
 
-## Architecture
+## 架构设计
 
-### Backend (Spring Boot 3.2)
-Standard 3-tier architecture: `controller/` -> `service/` -> `mapper/`
+### 后端 (Spring Boot 3.2)
+标准三层架构：`controller/` -> `service/` -> `mapper/`
 
-- `entity/` — Database entity classes (JPA-style with MyBatis-Plus)
-- `dto/` — Request DTOs for API input
-- `vo/` — Response View Objects
-- `common/` — Result wrapper, ResultCode enum, global exception handler
-- `config/` — CORS, Swagger/OpenAPI, JWT properties
+- `entity/` — 数据库实体类 (JPA 风格，使用 MyBatis-Plus)
+- `dto/` — 请求 DTO，用于 API 输入
+- `vo/` — 响应视图对象 (View Object)
+- `common/` — Result 统一响应包装、ResultCode 枚举、全局异常处理器
+- `config/` — CORS、Swagger/OpenAPI、JWT 配置
 
-Unified response format via `Result<T>` class. Swagger UI at `/swagger-ui.html`.
+统一响应格式通过 `Result<T>` 类实现。Swagger UI 地址：`/swagger-ui.html`。
 
-### Frontend (Vue 3 + TypeScript + Vite)
-- `views/` — Route-level page components
-- `components/` — Reusable UI components
-- `composables/` — Vue Composition API shared logic
-- `stores/` — Pinia state management
-- `api/` — Axios API modules (one file per backend controller)
-- `utils/request.ts` — Axios wrapper with JWT interceptor and error handling
-- `router/` — Vue Router with permission guards
+### 前端 (Vue 3 + TypeScript + Vite)
+- `views/` — 路由级页面组件
+- `components/` — 可复用 UI 组件
+- `composables/` — Vue Composition API 共享逻辑
+- `stores/` — Pinia 状态管理
+- `api/` — Axios API 模块 (每个后端控制器对应一个文件)
+- `utils/request.ts` — Axios 封装，包含 JWT 拦截器和错误处理
+- `router/` — Vue Router 路由配置，包含权限守卫
 
-Component auto-import is configured via `unplugin-vue-components` and `unplugin-auto-import`.
+组件自动导入通过 `unplugin-vue-components` 和 `unplugin-auto-import` 配置实现。
 
-## Business Logic
+## 业务逻辑
 
-### Workload Calculation Model
-Core migration workload = Sum of (module base days × weighted coefficient × data volume coefficient × user count coefficient), where coefficients are auto-matched via ladder range matching.
+### 工作量计算模型
+核心迁移工作量 = Σ (模块基础天数 × 权重系数 × 数据量系数 × 用户数系数)，其中系数通过阶梯范围匹配自动计算。
 
-Project lifecycle: Draft → In Progress → Completed → Archived
+项目生命周期：草稿 → 进行中 → 已完成 → 已归档
 
-### 5 Core Modules
-1. System Management — system types, module library, ladder configs, report config, user management
-2. Project Management — create/list projects, status tracking
-3. Workload Evaluation — 4-step evaluation wizard
-4. Statistics & Visualization — ECharts dashboards
-5. Report Export — Excel/PDF/Word generation
+### 五大核心模块
+1. 系统管理 — 系统类型、模块库、阶梯配置、报表配置、用户管理
+2. 项目管理 — 创建/列表项目、状态跟踪
+3. 工作量评估 — 四步评估向导
+4. 统计可视化 — ECharts 图表仪表盘
+5. 报表导出 — Excel/PDF/Word 生成
 
-## Key Conventions
+## 关键约定
 
-- **Soft delete**: All entities use `deleted` field for logical deletion via MyBatis-Plus
-- **JWT auth**: Token-based authentication with configurable expiration (default 2 hours)
-- **Git workflow**: Feature branches merged into `develop`, then PR to `main`
-- **Commit style**: Chinese commit messages describing what was done
-- **Current branch**: `develop` (main is the release branch)
-- **Development phase**: Currently in Phase 3 (Project Management module)
+- **软删除**：所有实体使用 `deleted` 字段进行逻辑删除，由 MyBatis-Plus 管理
+- **JWT 认证**：基于 Token 的身份认证，可配置过期时间（默认 2 小时）
+- **Git 工作流**：功能分支合并到 `develop`，然后 PR 到 `main`
+- **提交风格**：使用中文提交信息，描述所做的工作
+- **当前分支**：`develop`（main 为发布分支）
+- **开发阶段**：当前处于第三阶段（项目管理模块）
 
-## Documentation
+## 文档资源
 
-Comprehensive Chinese documentation in `docs/`:
-- `architecture/需求说明文档.md` — Functional requirements
-- `architecture/产品设计文档.md` — Product design
-- `architecture/技术架构文档.md` — Technical architecture (91KB)
-- `architecture/数据库设计文档.md` — Database design (61KB)
-- `develop/plan.md` — 7-phase development plan
-- `init-db.sql` — Full database schema (44KB)
+`docs/` 目录下包含详细的中文文档：
+- `architecture/需求说明文档.md` — 功能需求说明
+- `architecture/产品设计文档.md` — 产品设计文档
+- `architecture/技术架构文档.md` — 技术架构设计 (91KB)
+- `architecture/数据库设计文档.md` — 数据库设计 (61KB)
+- `develop/plan.md` — 七阶段开发计划
+- `init-db.sql` — 完整数据库建表脚本 (44KB)
 
-## API Client (Frontend)
+## API 客户端（前端）
 
-`migrametric-web/src/utils/request.ts` is the Axios instance used by all API modules. It handles:
-- JWT token injection from Pinia store
-- Global error handling
-- Response unwrapping (`Result<T>` wrapper)
+`migrametric-web/src/utils/request.ts` 是所有 API 模块使用的 Axios 实例，负责：
+- 从 Pinia store 注入 JWT token
+- 全局错误处理
+- 响应数据解包（`Result<T>` 包装）
 
-API modules in `api/` are named after backend controller packages.
+`api/` 目录下的 API 模块命名与后端控制器包名对应。

@@ -136,42 +136,42 @@ export interface ModuleWorkloadVO {
  * 创建评估记录
  */
 export function createEvaluation(projectId: number) {
-  return request.post<{ data: number }>('/api/evaluations', { projectId }).then(res => (res as any).data)
+  return request.post<{ data: number }>('/evaluations', { projectId })
 }
 
 /**
  * 获取评估详情
  */
 export function getEvaluation(projectId: number) {
-  return request.get<EvaluationDetailVO>(`/api/evaluations/${projectId}`).then(res => (res as any).data)
+  return request.get<EvaluationDetailVO>(`/evaluations/${projectId}`)
 }
 
 /**
  * 保存评估指标
  */
 export function saveIndicators(projectId: number, metrics: EvaluationMetrics) {
-  return request.put<void>(`/api/evaluations/${projectId}/indicators`, metrics).then(res => res.data)
+  return request.put<void>(`/evaluations/${projectId}/indicators`, metrics)
 }
 
 /**
  * 获取项目可选模块列表
  */
 export function getProjectModules(projectId: number) {
-  return request.get<{ data: ModuleConfigItem[] }>(`/api/evaluations/${projectId}/modules`).then(res => (res as any).data?.data || [])
+  return request.get<{ data: ModuleConfigItem[] }>(`/evaluations/${projectId}/modules`)
 }
 
 /**
  * 保存模块配置
  */
 export function saveModuleConfig(projectId: number, modules: ModuleConfigItem[]) {
-  return request.post<void>(`/api/evaluations/${projectId}/modules`, modules).then(res => res.data)
+  return request.post<void>(`/evaluations/${projectId}/modules`, modules)
 }
 
 /**
  * 获取已配置的模块
  */
 export function getConfiguredModules(projectId: number) {
-  return request.get<{ data: ModuleConfigItem[] }>(`/api/evaluations/${projectId}/modules/configured`).then(res => (res as any).data?.data || [])
+  return request.get<{ data: ModuleConfigItem[] }>(`/evaluations/${projectId}/modules/configured`)
 }
 
 // ========== 阶梯匹配API ==========
@@ -180,14 +180,14 @@ export function getConfiguredModules(projectId: number) {
  * 获取阶梯匹配结果（数据量）
  */
 export function matchDataVolume(volume: number | null) {
-  return request.get<LadderMatchVO>('/api/ladder/data-volume/match', { params: { volume } }).then(res => (res as any).data)
+  return request.get<LadderMatchVO>('/ladder/data-volume/match', { volume })
 }
 
 /**
  * 获取阶梯匹配结果（用户数）
  */
 export function matchUserCount(count: number | null) {
-  return request.get<LadderMatchVO>('/api/ladder/user-count/match', { params: { count } }).then(res => (res as any).data)
+  return request.get<LadderMatchVO>('/ladder/user-count/match', { count })
 }
 
 // ========== 工作量计算API ==========
@@ -196,12 +196,12 @@ export function matchUserCount(count: number | null) {
  * 计算工作量
  */
 export function calculateWorkload(projectId: number) {
-  return request.post<WorkloadResultVO>(`/api/evaluations/${projectId}/calculate`).then(res => (res as any).data)
+  return request.post<WorkloadResultVO>(`/evaluations/${projectId}/calculate`)
 }
 
 /**
  * 完成评估
  */
 export function completeEvaluation(projectId: number) {
-  return request.post<void>(`/api/evaluations/${projectId}/complete`).then(res => res.data)
+  return request.post<void>(`/evaluations/${projectId}/complete`)
 }

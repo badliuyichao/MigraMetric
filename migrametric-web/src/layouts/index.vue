@@ -26,6 +26,24 @@
             <span>系统管理</span>
           </template>
           <el-menu-item index="/system/types">系统类型管理</el-menu-item>
+          <el-menu-item index="/system/modules">模块库管理</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu v-if="userStore.isAdmin" index="/ladder">
+          <template #title>
+            <el-icon><TrendCharts /></el-icon>
+            <span>阶梯配置</span>
+          </template>
+          <el-menu-item index="/ladder/data-volume">数据量阶梯</el-menu-item>
+          <el-menu-item index="/ladder/user-count">用户数阶梯</el-menu-item>
+        </el-sub-menu>
+
+        <el-sub-menu v-if="userStore.isAdmin" index="/config">
+          <template #title>
+            <el-icon><Setting /></el-icon>
+            <span>系统配置</span>
+          </template>
+          <el-menu-item index="/config/report">报表系数配置</el-menu-item>
         </el-sub-menu>
 
         <el-sub-menu index="/project">
@@ -89,7 +107,7 @@
 import { ref, computed } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ElMessageBox, ElMessage } from 'element-plus'
-import { UserFilled } from '@element-plus/icons-vue'
+import { UserFilled, TrendCharts } from '@element-plus/icons-vue'
 import { useUserStore } from '@/stores/user'
 
 const route = useRoute()

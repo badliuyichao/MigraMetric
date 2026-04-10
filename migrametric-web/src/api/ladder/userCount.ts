@@ -45,56 +45,54 @@ export interface UserCountLadderVO {
  * 获取所有阶梯
  */
 export function listAllUserCountLadders() {
-  return request.get<UserCountLadderVO[]>('/ladder/user-count').then(res => res.data)
+  return request.get<UserCountLadderVO[]>('/user-count-ladders')
 }
 
 /**
  * 根据ID获取阶梯详情
  */
 export function getUserCountLadderById(id: number) {
-  return request.get<UserCountLadderVO>(`/ladder/user-count/${id}`).then(res => res.data)
+  return request.get<UserCountLadderVO>(`/user-count-ladders/${id}`)
 }
 
 /**
  * 创建阶梯
  */
 export function createUserCountLadder(data: UserCountLadderCreate) {
-  return request.post<number>('/ladder/user-count', data).then(res => res.data)
+  return request.post<number>('/user-count-ladders', data)
 }
 
 /**
  * 更新阶梯
  */
 export function updateUserCountLadder(id: number, data: UserCountLadderUpdate) {
-  return request.put<void>(`/ladder/user-count/${id}`, data).then(res => res.data)
+  return request.put<void>(`/user-count-ladders/${id}`, data)
 }
 
 /**
  * 删除阶梯
  */
 export function deleteUserCountLadder(id: number) {
-  return request.delete<void>(`/ladder/user-count/${id}`).then(res => res.data)
+  return request.delete<void>(`/user-count-ladders/${id}`)
 }
 
 /**
  * 上移动阶梯
  */
 export function moveUpUserCountLadder(id: number) {
-  return request.patch<void>(`/ladder/user-count/${id}/move-up`).then(res => res.data)
+  return request.patch<void>(`/user-count-ladders/${id}/move-up`)
 }
 
 /**
  * 下移动阶梯
  */
 export function moveDownUserCountLadder(id: number) {
-  return request.patch<void>(`/ladder/user-count/${id}/move-down`).then(res => res.data)
+  return request.patch<void>(`/user-count-ladders/${id}/move-down`)
 }
 
 /**
  * 根据用户数匹配阶梯
  */
 export function matchUserCountLadder(count: number) {
-  return request.get<UserCountLadderVO>(`/ladder/user-count/match`, {
-    params: { count }
-  }).then(res => res.data)
+  return request.get<UserCountLadderVO>(`/user-count-ladders/match`, { count })
 }

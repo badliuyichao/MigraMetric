@@ -76,65 +76,61 @@ export interface PageResult<T> {
  * 分页查询模块
  */
 export function queryModulePage(params: ModuleQuery) {
-  return request.get<PageResult<ModuleVO>>('/modules', { params }).then(res => res.data)
+  return request.get<PageResult<ModuleVO>>('/modules', params)
 }
 
 /**
  * 获取所有启用的模块
  */
 export function listEnabledModules(systemId?: number) {
-  return request.get<ModuleVO[]>('/modules/enabled', {
-    params: systemId !== undefined ? { systemId } : {}
-  }).then(res => res.data)
+  return request.get<ModuleVO[]>('/modules/enabled', systemId !== undefined ? { systemId } : {})
 }
 
 /**
  * 获取模块分类列表
  */
 export function listModuleCategories(systemId?: number) {
-  return request.get<string[]>('/modules/categories', {
-    params: systemId !== undefined ? { systemId } : {}
-  }).then(res => res.data)
+  return request.get<string[]>('/modules/categories', systemId !== undefined ? { systemId } : {})
 }
 
 /**
  * 根据ID获取模块详情
  */
 export function getModuleById(id: number) {
-  return request.get<ModuleVO>(`/modules/${id}`).then(res => res.data)
+  return request.get<ModuleVO>(`/modules/${id}`)
 }
 
 /**
  * 创建模块
  */
 export function createModule(data: ModuleCreate) {
-  return request.post<number>('/modules', data).then(res => res.data)
+  return request.post<number>('/modules', data)
 }
 
 /**
  * 更新模块
  */
 export function updateModule(id: number, data: ModuleUpdate) {
-  return request.put<void>(`/modules/${id}`, data).then(res => res.data)
+  return request.put<void>(`/modules/${id}`, data)
 }
 
 /**
  * 删除模块
  */
 export function deleteModule(id: number) {
-  return request.delete<void>(`/modules/${id}`).then(res => res.data)
+  return request.delete<void>(`/modules/${id}`)
 }
 
 /**
  * 启用模块
  */
 export function enableModule(id: number) {
-  return request.patch<void>(`/modules/${id}/enable`).then(res => res.data)
+  return request.patch<void>(`/modules/${id}/enable`)
 }
 
 /**
  * 禁用模块
  */
 export function disableModule(id: number) {
-  return request.patch<void>(`/modules/${id}/disable`).then(res => res.data)
+  return request.patch<void>(`/modules/${id}/disable`)
 }

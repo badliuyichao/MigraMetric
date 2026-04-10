@@ -21,7 +21,7 @@ import java.util.List;
  */
 @Tag(name = "报表配置管理", description = "报表系统参数配置相关接口")
 @RestController
-@RequestMapping("/config/report")
+@RequestMapping("/api/report-configs")
 @RequiredArgsConstructor
 public class ReportConfigController {
 

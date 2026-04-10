@@ -86,5 +86,5 @@ export interface StatisticsResultVO {
  * 获取项目统计结果
  */
 export function getStatistics(projectId: number) {
-  return request.get<StatisticsResultVO>(`/api/statistics/${projectId}`).then(res => res.data)
+  return request.get<StatisticsResultVO>(`/statistics/${projectId}`)
 }

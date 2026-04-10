@@ -68,56 +68,54 @@ export interface PageResult<T> {
  * 分页查询系统类型
  */
 export function querySystemTypePage(params: SystemTypeQuery) {
-  return request.get<PageResult<SystemTypeVO>>('/system/types', { params }).then(res => res.data)
+  return request.get<PageResult<SystemTypeVO>>('/system/types', params)
 }
 
 /**
  * 获取所有启用的系统类型
  */
 export function listEnabledSystemTypes(category?: number) {
-  return request.get<SystemTypeVO[]>('/system/types/enabled', {
-    params: category !== undefined ? { category } : {}
-  }).then(res => res.data)
+  return request.get<SystemTypeVO[]>('/system/types/enabled', category !== undefined ? { category } : {})
 }
 
 /**
  * 根据ID获取系统类型详情
  */
 export function getSystemTypeById(id: number) {
-  return request.get<SystemTypeVO>(`/system/types/${id}`).then(res => res.data)
+  return request.get<SystemTypeVO>(`/system/types/${id}`)
 }
 
 /**
  * 创建系统类型
  */
 export function createSystemType(data: SystemTypeCreate) {
-  return request.post<number>('/system/types', data).then(res => res.data)
+  return request.post<number>('/system/types', data)
 }
 
 /**
  * 更新系统类型
  */
 export function updateSystemType(id: number, data: SystemTypeUpdate) {
-  return request.put<void>(`/system/types/${id}`, data).then(res => res.data)
+  return request.put<void>(`/system/types/${id}`, data)
 }
 
 /**
  * 删除系统类型
  */
 export function deleteSystemType(id: number) {
-  return request.delete<void>(`/system/types/${id}`).then(res => res.data)
+  return request.delete<void>(`/system/types/${id}`)
 }
 
 /**
  * 启用系统类型
  */
 export function enableSystemType(id: number) {
-  return request.patch<void>(`/system/types/${id}/enable`).then(res => res.data)
+  return request.patch<void>(`/system/types/${id}/enable`)
 }
 
 /**
  * 禁用系统类型
  */
 export function disableSystemType(id: number) {
-  return request.patch<void>(`/system/types/${id}/disable`).then(res => res.data)
+  return request.patch<void>(`/system/types/${id}/disable`)
 }

@@ -22,7 +22,9 @@
       "Bash(mysql:*)",
       "Bash(node_modules/.bin/vitest run:*)",
       "Bash(ls:*)",
-      "Bash(mvn package:*)"
+      "Bash(mvn package:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(claude mcp:*)"
     ]
   }
 }

@@ -39,7 +39,7 @@ export function exportToExcel(projectId: number, sections?: ExportSection) {
     format: 'EXCEL',
     sections
   }
-  return request.post<Blob>(`/api/export/excel/${projectId}`, params, {
+  return request.post<Blob>(`/export/excel/${projectId}`, params, {
     responseType: 'blob'
   })
 }
@@ -53,7 +53,7 @@ export function exportToPdf(projectId: number, sections?: ExportSection) {
     format: 'PDF',
     sections
   }
-  return request.post<Blob>(`/api/export/pdf/${projectId}`, params, {
+  return request.post<Blob>(`/export/pdf/${projectId}`, params, {
     responseType: 'blob'
   })
 }
@@ -67,7 +67,7 @@ export function exportToWord(projectId: number, sections?: ExportSection) {
     format: 'WORD',
     sections
   }
-  return request.post<Blob>(`/api/export/word/${projectId}`, params, {
+  return request.post<Blob>(`/export/word/${projectId}`, params, {
     responseType: 'blob'
   })
 }

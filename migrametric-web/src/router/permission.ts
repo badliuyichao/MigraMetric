@@ -1,5 +1,5 @@
 import type { App } from 'vue'
-import { useRouter } from 'vue-router'
+import type { Router } from 'vue-router'
 import { useUserStore } from '@/stores/user'
 import { ElMessage } from 'element-plus'
 import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
@@ -7,9 +7,7 @@ import type { NavigationGuardNext, RouteLocationNormalized } from 'vue-router'
 /**
  * 设置路由权限控制
  */
-export function setupPermission(_app: App): void {
-  const router = useRouter()
-
+export function setupPermission(_app: App, router: Router): void {
   router.beforeEach(async (
     to: RouteLocationNormalized,
     _from: RouteLocationNormalized,

@@ -138,54 +138,54 @@ export interface ProjectPageResponse extends PageResult<ProjectVO> {}
  * 创建项目
  */
 export function createProject(data: ProjectCreate) {
-  return request.post<number>('/api/projects', data).then(res => res.data)
+  return request.post<number>('/projects', data)
 }
 
 /**
  * 查询项目列表
  */
 export function queryProjectPage(params: ProjectQuery) {
-  return request.get<ProjectPageResponse>('/api/projects', { params }).then(res => res.data)
+  return request.get<ProjectPageResponse>('/projects', params)
 }
 
 /**
  * 获取项目详情
  */
 export function getProjectById(id: number) {
-  return request.get<ProjectVO>(`/api/projects/${id}`).then(res => res.data)
+  return request.get<ProjectVO>(`/projects/${id}`)
 }
 
 /**
  * 获取项目详情（包含评估概况）
  */
 export function getProjectDetail(id: number) {
-  return request.get<ProjectDetailVO>(`/api/projects/${id}/detail`).then(res => res.data)
+  return request.get<ProjectDetailVO>(`/projects/${id}/detail`)
 }
 
 /**
  * 更新项目信息
  */
 export function updateProject(id: number, data: ProjectUpdate) {
-  return request.put<void>(`/api/projects/${id}`, data).then(res => res.data)
+  return request.put<void>(`/projects/${id}`, data)
 }
 
 /**
  * 复制项目
  */
 export function copyProject(id: number) {
-  return request.post<number>(`/api/projects/${id}/copy`).then(res => res.data)
+  return request.post<number>(`/projects/${id}/copy`)
 }
 
 /**
  * 删除项目
  */
 export function deleteProject(id: number) {
-  return request.delete<void>(`/api/projects/${id}`).then(res => res.data)
+  return request.delete<void>(`/projects/${id}`)
 }
 
 /**
  * 归档项目
  */
 export function archiveProject(id: number) {
-  return request.post<void>(`/api/projects/${id}/archive`).then(res => res.data)
+  return request.post<void>(`/projects/${id}/archive`)
 }

@@ -22,7 +22,7 @@ import java.util.List;
  */
 @Tag(name = "数据量阶梯管理", description = "数据量阶梯配置相关接口")
 @RestController
-@RequestMapping("/ladder/data-volume")
+@RequestMapping("/api/data-volume-ladders")
 @RequiredArgsConstructor
 public class DataVolumeLadderController {
 

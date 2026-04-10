@@ -23,7 +23,7 @@ import java.util.List;
  */
 @Tag(name = "模块管理", description = "模块配置相关接口")
 @RestController
-@RequestMapping("/modules")
+@RequestMapping("/api/modules")
 @RequiredArgsConstructor
 public class ModuleController {
 

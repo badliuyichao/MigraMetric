@@ -30,7 +30,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'system',
         name: 'System',
-        component: () => import('@/layouts/index.vue'),
+        component: () => import('@/layouts/RouteView.vue'),
         redirect: '/system/types',
         meta: {
           title: '系统管理',
@@ -61,7 +61,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'ladder',
         name: 'Ladder',
-        component: () => import('@/layouts/index.vue'),
+        component: () => import('@/layouts/RouteView.vue'),
         redirect: '/ladder/data-volume',
         meta: {
           title: '阶梯配置',
@@ -92,7 +92,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'config',
         name: 'Config',
-        component: () => import('@/layouts/index.vue'),
+        component: () => import('@/layouts/RouteView.vue'),
         redirect: '/config/report',
         meta: {
           title: '系统配置',
@@ -114,7 +114,7 @@ const routes: RouteRecordRaw[] = [
       {
         path: 'project',
         name: 'Project',
-        component: () => import('@/layouts/index.vue'),
+        component: () => import('@/layouts/RouteView.vue'),
         redirect: '/project/list',
         meta: {
           title: '项目管理',

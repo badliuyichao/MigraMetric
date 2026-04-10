@@ -128,26 +128,31 @@ function handleUnauthorized() {
   })
 }
 
-// 封装请求方法
+// 封装请求方法 - 直接返回业务数据
 export const request = {
-  get<T>(url: string, params?: Record<string, unknown>, config?: AxiosRequestConfig) {
-    return service.get<ApiResponse<T>>(url, { params, ...config })
+  async get<T>(url: string, params?: Record<string, unknown>, config?: AxiosRequestConfig) {
+    const response = await service.get<ApiResponse<T>>(url, { params, ...config })
+    return response.data.data // 直接返回业务数据 T
   },
 
-  post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return service.post<ApiResponse<T>>(url, data, config)
+  async post<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await service.post<ApiResponse<T>>(url, data, config)
+    return response.data.data // 直接返回业务数据 T
   },
 
-  put<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return service.put<ApiResponse<T>>(url, data, config)
+  async put<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await service.put<ApiResponse<T>>(url, data, config)
+    return response.data.data // 直接返回业务数据 T
   },
 
-  delete<T>(url: string, params?: Record<string, unknown>, config?: AxiosRequestConfig) {
-    return service.delete<ApiResponse<T>>(url, { params, ...config })
+  async delete<T>(url: string, params?: Record<string, unknown>, config?: AxiosRequestConfig) {
+    const response = await service.delete<ApiResponse<T>>(url, { params, ...config })
+    return response.data.data // 直接返回业务数据 T
   },
 
-  patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
-    return service.patch<ApiResponse<T>>(url, data, config)
+  async patch<T>(url: string, data?: unknown, config?: AxiosRequestConfig) {
+    const response = await service.patch<ApiResponse<T>>(url, data, config)
+    return response.data.data // 直接返回业务数据 T
   }
 }
 

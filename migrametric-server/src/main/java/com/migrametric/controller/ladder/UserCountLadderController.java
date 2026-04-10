@@ -21,7 +21,7 @@ import java.util.List;
  */
 @Tag(name = "用户数阶梯管理", description = "用户数阶梯配置相关接口")
 @RestController
-@RequestMapping("/ladder/user-count")
+@RequestMapping("/api/user-count-ladders")
 @RequiredArgsConstructor
 public class UserCountLadderController {
 

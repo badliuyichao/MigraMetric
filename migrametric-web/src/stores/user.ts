@@ -39,11 +39,9 @@ export const useUserStore = defineStore('user', () => {
    * 用户登录
    */
   async function login(loginData: LoginData): Promise<void> {
-    const response = await request.post<LoginResult>('/auth/login', loginData)
-    // response.data 是 ApiResponse<LoginResult>，response.data.data 才是 LoginResult
-    const result = (response.data as { data: LoginResult }).data
+    const result = await request.post<LoginResult>('/auth/login', loginData)
 
-    if (result) {
+    if (result && result.token) {
       token.value = result.token
       localStorage.setItem('token', result.token)
     }
@@ -56,9 +54,7 @@ export const useUserStore = defineStore('user', () => {
     if (!token.value) return
 
     try {
-      const response = await request.get<UserInfo>('/auth/info')
-      // response.data 是 ApiResponse<UserInfo>，response.data.data 才是 UserInfo
-      const result = (response.data as { data: UserInfo }).data
+      const result = await request.get<UserInfo>('/auth/info')
 
       if (result) {
         userInfo.value = result
