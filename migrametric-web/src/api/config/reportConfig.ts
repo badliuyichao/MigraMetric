@@ -31,26 +31,26 @@ export interface ReportConfigVO {
  * 获取所有配置
  */
 export function listAllReportConfigs() {
-  return request.get<ReportConfigVO[]>('/config/report')
+  return request.get<ReportConfigVO[]>('/report-configs')
 }
 
 /**
  * 根据配置键获取配置值
  */
 export function getReportConfigValue(configKey: string) {
-  return request.get<string>('/config/report/value', { configKey })
+  return request.get<string>('/report-configs/value', { configKey })
 }
 
 /**
  * 根据配置键获取配置值（数值）
  */
 export function getReportConfigValueAsNumber(configKey: string, defaultValue?: number) {
-  return request.get<number>('/config/report/value/number', { configKey, defaultValue })
+  return request.get<number>('/report-configs/value/number', { configKey, defaultValue })
 }
 
 /**
  * 更新配置
  */
 export function updateReportConfig(data: ReportConfigUpdate) {
-  return request.put<void>('/config/report', data)
+  return request.put<void>('/report-configs', data)
 }

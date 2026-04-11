@@ -241,7 +241,7 @@ class WorkloadCalculationServiceTest {
         @DisplayName("WC-RPT-001: 报表工作量-正常计算")
         void shouldCalculateReportWorkload() {
             // Given: 报表数量50，报表系数0.5
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
 
             // When
@@ -275,7 +275,7 @@ class WorkloadCalculationServiceTest {
         @DisplayName("WC-RPT-004: 报表工作量-小数结果")
         void shouldCalculateReportWorkloadWithDecimalResult() {
             // Given: 报表数量33，报表系数0.5
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
 
             // When
@@ -289,7 +289,7 @@ class WorkloadCalculationServiceTest {
         @DisplayName("WC-RPT-005: 报表工作量-使用默认系数")
         void shouldUseDefaultCoefficient() {
             // Given: 配置服务返回null，使用默认系数0.5
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
 
             // When
@@ -497,7 +497,7 @@ class WorkloadCalculationServiceTest {
             when(evaluationMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(testEvaluation);
             when(dataVolumeLadderMapper.selectById(2L)).thenReturn(testDataVolumeLadder);
             when(userCountLadderMapper.selectById(2L)).thenReturn(testUserCountLadder);
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
             when(moduleConfigMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(testModuleConfigs);
             when(moduleMapper.selectBatchIds(any())).thenReturn(testModules);
@@ -537,7 +537,7 @@ class WorkloadCalculationServiceTest {
             when(evaluationMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(testEvaluation);
             when(dataVolumeLadderMapper.selectById(any())).thenReturn(testDataVolumeLadder);
             when(userCountLadderMapper.selectById(any())).thenReturn(testUserCountLadder);
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
             when(moduleConfigMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(Collections.emptyList());
 
@@ -557,7 +557,7 @@ class WorkloadCalculationServiceTest {
             when(evaluationMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(testEvaluation);
             when(dataVolumeLadderMapper.selectById(any())).thenReturn(testDataVolumeLadder);
             when(userCountLadderMapper.selectById(any())).thenReturn(testUserCountLadder);
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
             when(moduleConfigMapper.selectList(any(LambdaQueryWrapper.class))).thenReturn(testModuleConfigs);
             when(moduleMapper.selectBatchIds(any())).thenReturn(testModules);
@@ -625,7 +625,7 @@ class WorkloadCalculationServiceTest {
         @DisplayName("INT-004: 报表工作量")
         void shouldCalculateReportWorkload() {
             // Given: 50×0.5=25
-            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_coefficient"), any()))
+            when(reportConfigService.getValueAsBigDecimal(eq("report_workload_per_unit"), any()))
                     .thenReturn(new BigDecimal("0.5"));
 
             // When
