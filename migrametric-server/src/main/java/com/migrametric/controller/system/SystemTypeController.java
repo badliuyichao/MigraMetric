@@ -21,7 +21,7 @@ import java.util.List;
  *
  * @author MigraMetric Team
  */
-@Tag(name = "系统配置", description = "系统类型管理接口")
+@Tag(name = "系统配置", description = "系统管理接口")
 @RestController
 @RequestMapping("/api/system/types")
 @RequiredArgsConstructor

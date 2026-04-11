@@ -25,7 +25,7 @@
             <el-icon><Setting /></el-icon>
             <span>系统管理</span>
           </template>
-          <el-menu-item index="/system/types">系统类型管理</el-menu-item>
+          <el-menu-item index="/system/types">系统管理</el-menu-item>
           <el-menu-item index="/system/modules">模块库管理</el-menu-item>
         </el-sub-menu>
 

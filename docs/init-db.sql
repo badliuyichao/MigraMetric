@@ -543,13 +543,13 @@ INSERT INTO sys_permission (perm_code, perm_name, perm_type, perm_sort, path, pa
 ('report', '报告输出', 'menu', 5, '/report', 0, 1, 'system'),
 
 -- 系统管理子菜单
-('system:type', '系统类型管理', 'menu', 1, '/system/type', 1, 1, 'system'),
+('system:types', '系统管理', 'menu', 1, '/system/types', 1, 1, 'system'),
 ('system:module', '模块库管理', 'menu', 2, '/system/module', 1, 1, 'system'),
 ('system:ladder', '阶梯配置', 'menu', 3, '/system/ladder', 1, 1, 'system'),
 ('system:config', '报表系数配置', 'menu', 4, '/system/config', 1, 1, 'system'),
 ('system:user', '用户管理', 'menu', 5, '/system/user', 1, 1, 'system'),
 
--- 系统类型管理按钮
+-- 系统管理按钮
 ('system:type:list', '查询', 'button', 1, NULL, 2, 1, 'system'),
 ('system:type:add', '新增', 'button', 2, NULL, 2, 1, 'system'),
 ('system:type:edit', '编辑', 'button', 3, NULL, 2, 1, 'system'),

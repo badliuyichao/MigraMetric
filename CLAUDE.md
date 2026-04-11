@@ -85,7 +85,7 @@ pnpm test:coverage               # 生成覆盖率报告
 
 ## 文档资源
 
-`docs/` 目录下包含详细的中文文档：
+`docs/` 目录下包含详细的项目文档：
 - `architecture/需求说明文档.md` — 功能需求说明
 - `architecture/产品设计文档.md` — 产品设计文档
 - `architecture/技术架构文档.md` — 技术架构设计 (91KB)

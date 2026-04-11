@@ -38,7 +38,7 @@ INSERT INTO sys_permission (perm_code, perm_name, perm_type, perm_sort, path, ic
 ('DASHBOARD', '首页', 'menu', 1, '/dashboard', 'HomeFilled', 0, 1, 'system'),
 
 -- 系统管理子菜单
-('SYSTEM_TYPES', '系统类型管理', 'menu', 101, '/system/types', NULL, (SELECT id FROM sys_permission WHERE perm_code='SYSTEM'), 1, 'system'),
+('SYSTEM_TYPES', '系统管理', 'menu', 101, '/system/types', NULL, (SELECT id FROM sys_permission WHERE perm_code='SYSTEM'), 1, 'system'),
 
 -- 项目管理子菜单
 ('PROJECT_LIST', '项目列表', 'menu', 201, '/project/list', NULL, (SELECT id FROM sys_permission WHERE perm_code='PROJECT'), 1, 'system'),

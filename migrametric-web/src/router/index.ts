@@ -43,7 +43,7 @@ const routes: RouteRecordRaw[] = [
             name: 'SystemTypes',
             component: () => import('@/views/system/types/index.vue'),
             meta: {
-              title: '系统类型管理',
+              title: '系统管理',
               roles: ['ADMIN']
             }
           },
