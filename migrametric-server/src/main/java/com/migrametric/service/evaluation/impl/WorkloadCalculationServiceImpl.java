@@ -61,7 +61,7 @@ public class WorkloadCalculationServiceImpl implements WorkloadCalculationServic
     /**
      * 报表系数配置键
      */
-    private static final String REPORT_COEFFICIENT_KEY = "report_workload_coefficient";
+    private static final String REPORT_COEFFICIENT_KEY = "report_workload_per_unit";
 
     /**
      * 默认报表系数
