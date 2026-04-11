@@ -332,7 +332,7 @@ class EvaluationServiceTest {
         void shouldSaveCustomDevInfoCorrectly() {
             // Given
             EvaluationUpdateDTO dto = createTestIndicatorDTO();
-            dto.setHasCustomDev(1);
+            dto.setHasCustomDev(true);
             dto.setCustomDevCount(3);
             dto.setCustomDevWorkload(new BigDecimal("30"));
 
@@ -473,7 +473,7 @@ class EvaluationServiceTest {
         dto.setUserCount(600);
         dto.setUserCountLadderId(2L);
         dto.setReportCount(50);
-        dto.setHasCustomDev(1);
+        dto.setHasCustomDev(true);
         dto.setCustomDevCount(2);
         dto.setCustomDevWorkload(new BigDecimal("20"));
         dto.setDataCleanDesc("测试清洗需求");

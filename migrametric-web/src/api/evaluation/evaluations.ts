@@ -157,7 +157,7 @@ export function saveIndicators(projectId: number, metrics: EvaluationMetrics) {
  * 获取项目可选模块列表
  */
 export function getProjectModules(projectId: number) {
-  return request.get<{ data: ModuleConfigItem[] }>(`/evaluations/${projectId}/modules`)
+  return request.get<ModuleConfigItem[]>(`/evaluations/${projectId}/modules`)
 }
 
 /**
@@ -171,7 +171,7 @@ export function saveModuleConfig(projectId: number, modules: ModuleConfigItem[])
  * 获取已配置的模块
  */
 export function getConfiguredModules(projectId: number) {
-  return request.get<{ data: ModuleConfigItem[] }>(`/evaluations/${projectId}/modules/configured`)
+  return request.get<ModuleConfigItem[]>(`/evaluations/${projectId}/modules/configured`)
 }
 
 // ========== 阶梯匹配API ==========

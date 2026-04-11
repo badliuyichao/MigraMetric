@@ -197,7 +197,7 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setUserCount(dto.getUserCount());
         evaluation.setUserCountLadderId(dto.getUserCountLadderId());
         evaluation.setReportCount(dto.getReportCount());
-        evaluation.setHasCustomDev(dto.getHasCustomDev());
+        evaluation.setHasCustomDev(Boolean.TRUE.equals(dto.getHasCustomDev()) ? 1 : 0);
         evaluation.setCustomDevCount(dto.getCustomDevCount());
         evaluation.setCustomDevWorkload(dto.getCustomDevWorkload());
         evaluation.setDataCleanDesc(dto.getDataCleanDesc());

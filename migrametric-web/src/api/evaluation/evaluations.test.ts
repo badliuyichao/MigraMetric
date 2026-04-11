@@ -107,7 +107,7 @@ describe('评估API测试', () => {
         { moduleId: 1, moduleName: '财务管理', baseWorkload: 15, defaultWeight: 1.3, checked: true },
         { moduleId: 2, moduleName: '供应链管理', baseWorkload: 20, defaultWeight: 1.5, checked: false }
       ]
-      ;(request.get as any).mockResolvedValue({ data: { data: mockModules } })
+      ;(request.get as any).mockResolvedValue({ data: mockModules })
 
       const result = await getProjectModules(1)
 
@@ -121,8 +121,8 @@ describe('评估API测试', () => {
       ;(request.post as any).mockResolvedValue({ data: null })
 
       const modules = [
-        { moduleId: 1, moduleName: '财务管理', weight: 1.3, checked: true },
-        { moduleId: 2, moduleName: '供应链管理', weight: 1.5, checked: true }
+        { moduleId: 1, moduleName: '财务管理', category: '财务', baseWorkload: 15, defaultWeight: 1.3, weight: 1.3, checked: true },
+        { moduleId: 2, moduleName: '供应链管理', category: '供应链', baseWorkload: 20, defaultWeight: 1.5, weight: 1.5, checked: true }
       ]
 
       await saveModuleConfig(1, modules)
@@ -352,7 +352,7 @@ describe('评估API测试', () => {
         { moduleId: 1, moduleName: '财务管理', weight: 1.3 },
         { moduleId: 2, moduleName: '供应链管理', weight: 1.5 }
       ]
-      ;(request.get as any).mockResolvedValue({ data: { data: mockModules } })
+      ;(request.get as any).mockResolvedValue({ data: mockModules })
 
       const result = await getConfiguredModules(1)
 

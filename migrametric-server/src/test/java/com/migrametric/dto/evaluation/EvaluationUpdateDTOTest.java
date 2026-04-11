@@ -44,7 +44,7 @@ class EvaluationUpdateDTOTest {
         dto.setUserCount(500);
         dto.setUserCountLadderId(1L);
         dto.setReportCount(50);
-        dto.setHasCustomDev(1);
+        dto.setHasCustomDev(true);
         dto.setCustomDevCount(2);
         dto.setCustomDevWorkload(new BigDecimal("20"));
         dto.setDataCleanDesc("测试描述");
@@ -226,10 +226,10 @@ class EvaluationUpdateDTOTest {
         }
 
         @Test
-        @DisplayName("EVAL-DTO-CD-002: hasCustomDev为0时通过验证")
-        void shouldPassWhenZero() {
+        @DisplayName("EVAL-DTO-CD-002: hasCustomDev为false时通过验证")
+        void shouldPassWhenFalse() {
             EvaluationUpdateDTO dto = createValidDTO();
-            dto.setHasCustomDev(0);
+            dto.setHasCustomDev(false);
 
             Set<ConstraintViolation<EvaluationUpdateDTO>> violations = validator.validate(dto);
 
@@ -237,10 +237,10 @@ class EvaluationUpdateDTOTest {
         }
 
         @Test
-        @DisplayName("EVAL-DTO-CD-003: hasCustomDev为1时通过验证")
-        void shouldPassWhenOne() {
+        @DisplayName("EVAL-DTO-CD-003: hasCustomDev为true时通过验证")
+        void shouldPassWhenTrue() {
             EvaluationUpdateDTO dto = createValidDTO();
-            dto.setHasCustomDev(1);
+            dto.setHasCustomDev(true);
 
             Set<ConstraintViolation<EvaluationUpdateDTO>> violations = validator.validate(dto);
 

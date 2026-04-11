@@ -152,7 +152,7 @@ class EvaluationControllerTest {
             updateDTO.setDataVolume(new BigDecimal("800"));
             updateDTO.setUserCount(300);
             updateDTO.setReportCount(60);
-            updateDTO.setHasCustomDev(1);
+            updateDTO.setHasCustomDev(true);
             updateDTO.setCustomDevCount(10);
             updateDTO.setCustomDevWorkload(new BigDecimal("75"));
 

@@ -67,11 +67,11 @@ public class EvaluationUpdateDTO implements Serializable {
     private Integer reportCount;
 
     /**
-     * 是否有客开：0-否，1-是
+     * 是否有客开
      */
     @NotNull(message = "是否有客开不能为空")
-    @Schema(description = "是否有客开：0-否，1-是")
-    private Integer hasCustomDev;
+    @Schema(description = "是否有客开")
+    private Boolean hasCustomDev;
 
     /**
      * 客开模块数量（个）

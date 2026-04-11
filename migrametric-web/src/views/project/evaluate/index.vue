@@ -677,7 +677,7 @@ function handleWeightChange(row: ModuleConfigItem) {
 /**
  * 处理数据量变化 - 调用后端API匹配阶梯
  */
-async function handleDataVolumeChange(value: number | null) {
+async function handleDataVolumeChange(value: number | null | undefined) {
   if (value != null && value > 0) {
     try {
       const match = await matchDataVolume(value)
@@ -702,7 +702,7 @@ async function handleDataVolumeChange(value: number | null) {
 /**
  * 处理用户数变化 - 调用后端API匹配阶梯
  */
-async function handleUserCountChange(value: number | null) {
+async function handleUserCountChange(value: number | null | undefined) {
   if (value != null && value > 0) {
     try {
       const match = await matchUserCount(value)
@@ -742,6 +742,13 @@ async function handleNextStep() {
     if (currentStep.value === 1) {
       await loadAvailableModules()
     }
+
+    // 保存步骤二（模块配置）
+    if (currentStep.value === 2 && selectedModules.value.length > 0) {
+      await saveModuleConfig(projectId.value, selectedModules.value)
+      ElMessage.success('模块配置已保存')
+    }
+
     currentStep.value++
   }
 }
