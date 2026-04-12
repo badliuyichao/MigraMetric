@@ -1,0 +1,30 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mvn clean:*)",
+      "Bash(mvn surefire-report:report:*)",
+      "Bash(pnpm test:unit:*)",
+      "Bash(npm run:*)",
+      "Bash(npm install:*)",
+      "Bash(mvn test:*)",
+      "Bash(java:*)",
+      "Bash(rm:*)",
+      "Bash(npm test:*)",
+      "Bash(mvn test-compile:*)",
+      "Bash(dir:*)",
+      "Bash(mvn compile:*)",
+      "Bash(npx eslint:*)",
+      "Bash(cat:*)",
+      "Bash(mvn surefire:test:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx vitest:*)",
+      "Bash(pnpm test:*)",
+      "Bash(mysql:*)",
+      "Bash(node_modules/.bin/vitest run:*)",
+      "Bash(ls:*)",
+      "Bash(mvn package:*)",
+      "Bash(pnpm type-check:*)",
+      "Bash(claude mcp:*)"
+    ]
+  }
+}

@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.migrametric.mapper.system.SystemTypeMapper">
+
+    <!-- 检查系统名称是否存在（排除指定ID） -->
+    <select id="countBySystemNameExcludeId" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_system_type
+        WHERE system_name = #{systemName}
+        <if test="excludeId != null">
+            AND id != #{excludeId}
+        </if>
+    </select>
+
+    <!-- 检查系统名称是否存在 -->
+    <select id="countBySystemName" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_system_type
+        WHERE system_name = #{systemName}
+    </select>
+
+    <!-- 检查是否被模块引用 -->
+    <select id="countByModuleReference" resultType="int">
+        SELECT COUNT(*)
+        FROM sys_module
+        WHERE system_id = #{systemTypeId}
+        AND deleted = 0
+    </select>
+
+    <!-- 检查是否被项目引用（源系统） -->
+    <select id="countByProjectSourceReference" resultType="int">
+        SELECT COUNT(*)
+        FROM proj_project
+        WHERE source_system_id = #{systemTypeId}
+        AND deleted = 0
+    </select>
+
+    <!-- 检查是否被项目引用（目标系统） -->
+    <select id="countByProjectTargetReference" resultType="int">
+        SELECT COUNT(*)
+        FROM proj_project
+        WHERE target_system_id = #{systemTypeId}
+        AND deleted = 0
+    </select>
+
+</mapper>

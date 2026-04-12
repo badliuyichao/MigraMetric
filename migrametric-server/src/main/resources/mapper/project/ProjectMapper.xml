@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE mapper PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN" "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.migrametric.mapper.project.ProjectMapper">
+
+    <!-- 基础结果映射 -->
+    <resultMap id="BaseResultMap" type="com.migrametric.entity.project.Project">
+        <id column="id" property="id"/>
+        <result column="project_name" property="projectName"/>
+        <result column="customer_name" property="customerName"/>
+        <result column="source_system_id" property="sourceSystemId"/>
+        <result column="target_system_id" property="targetSystemId"/>
+        <result column="project_leader" property="projectLeader"/>
+        <result column="contact" property="contact"/>
+        <result column="description" property="description"/>
+        <result column="evaluation_date" property="evaluationDate"/>
+        <result column="status" property="status"/>
+        <result column="user_id" property="userId"/>
+        <result column="create_time" property="createTime"/>
+        <result column="update_time" property="updateTime"/>
+        <result column="create_by" property="createBy"/>
+        <result column="update_by" property="updateBy"/>
+    </resultMap>
+
+</mapper>

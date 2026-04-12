@@ -1,0 +1,25 @@
+# 开发环境配置
+spring:
+  config:
+    activate:
+      on-profile: dev
+
+  # 数据库配置
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://localhost:3306/migrametric_dev?useUnicode=true&characterEncoding=utf-8&serverTimezone=Asia/Shanghai&useSSL=false&allowPublicKeyRetrieval=true
+    username: root
+    password: admin123
+    hikari:
+      minimum-idle: 5
+      maximum-pool-size: 20
+      connection-timeout: 30000
+      idle-timeout: 600000
+      max-lifetime: 1800000
+
+# 日志配置 - 开发环境
+logging:
+  level:
+    root: INFO
+    com.migrametric: DEBUG
+    com.migrametric.mapper: DEBUG
