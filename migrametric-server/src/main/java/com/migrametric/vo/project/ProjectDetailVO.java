@@ -1,6 +1,5 @@
 package com.migrametric.vo.project;
 
-import com.migrametric.vo.evaluation.EvaluationVO;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 

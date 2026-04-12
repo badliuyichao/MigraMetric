@@ -4,7 +4,6 @@ import com.migrametric.dto.ladder.UserCountLadderCreateDTO;
 import com.migrametric.dto.ladder.UserCountLadderUpdateDTO;
 import com.migrametric.vo.ladder.UserCountLadderVO;
 
-import java.math.BigDecimal;
 import java.util.List;
 
 /**
