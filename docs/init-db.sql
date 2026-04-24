@@ -81,6 +81,7 @@ CREATE TABLE sys_permission (
     update_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by           VARCHAR(64)              DEFAULT NULL COMMENT '创建者',
     update_by           VARCHAR(64)              DEFAULT NULL COMMENT '更新者',
+    remark              VARCHAR(500)             DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_perm_code (perm_code),
     KEY idx_parent_id (parent_id),
@@ -181,6 +182,7 @@ CREATE TABLE sys_system_type (
     update_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
     create_by           VARCHAR(64)              DEFAULT NULL COMMENT '创建者',
     update_by           VARCHAR(64)              DEFAULT NULL COMMENT '更新者',
+    remark              VARCHAR(500)             DEFAULT NULL COMMENT '备注',
     PRIMARY KEY (id),
     UNIQUE KEY uk_system_name (system_name),
     KEY idx_system_category (system_category),
@@ -519,9 +521,9 @@ ON DELETE RESTRICT ON UPDATE CASCADE;
 -- 密码说明：admin123 的 BCrypt 加密结果
 -- -------------------------------------------
 INSERT INTO sys_user (username, password, user_name, role, status, create_by, remark) VALUES
-('admin', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE/sW/ddyQV7YW', '系统管理员', 'ADMIN', 1, 'system', '系统管理员账号'),
-('user01', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE/sW/ddyQV7YW', '张三', 'USER', 1, 'admin', '评估用户'),
-('user02', '$2a$10$7JB720yubVSZvUI0rEqK/.VqGOZTH.ulu33dHOiBE/sW/ddyQV7YW', '李四', 'USER', 1, 'admin', '评估用户');
+('admin', '$2a$10$tH4jO9AkRgCPVzJZKEYxuu8wx6U2bzygzAQT/DeqUec/4x113sw/q', '系统管理员', 'ADMIN', 1, 'system', '系统管理员账号'),
+('user01', '$2a$10$tH4jO9AkRgCPVzJZKEYxuu8wx6U2bzygzAQT/DeqUec/4x113sw/q', '张三', 'USER', 1, 'admin', '评估用户'),
+('user02', '$2a$10$tH4jO9AkRgCPVzJZKEYxuu8wx6U2bzygzAQT/DeqUec/4x113sw/q', '李四', 'USER', 1, 'admin', '评估用户');
 
 -- -------------------------------------------
 -- 2. 角色表初始数据
