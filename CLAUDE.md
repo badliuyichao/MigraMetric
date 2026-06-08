@@ -6,6 +6,16 @@
 
 MigraMetric 是一个全栈 Web 应用，用于评估企业异构系统迁移工作量。通过分析系统架构、功能模块和技术栈，帮助企业估算迁移成本和时间周期。
 
+## 开发rules
+
+- Read ALL files including test file first. The test defines what passes.
+- Write the COMPLETE solution in a single file write. Not incrementally.
+- Run tests once. If pass: stop immediately. If fail: read error, fix once, retest.
+- Never iterate more than once on the same failure. Rethink if stuck.
+- Never refactor, improve, or polish passing code.
+- For WebSocket: use a Set to track clients manually. Send to sender first, then broadcast to others via setTimeout(0). Never use pub/sub channels.
+- For E2E: must use Playwright, must run headed (browser visible) locally, and must screenshot every key step to `test-results/<specName>/<NN>-<name>.png`. See `migrametric-web/tests/README.md` §E2E 测试约定 for the full checklist.
+
 ## 环境要求
 
 - Java 17+ / Maven 3.8+
