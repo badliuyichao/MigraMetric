@@ -104,6 +104,7 @@
                 :data="availableModules"
                 border
                 style="width: 100%"
+                data-testid="module-table"
                 @selection-change="handleSelectionChange"
               >
                 <el-table-column type="selection" width="55" />
@@ -290,9 +291,9 @@
                 <span>计算中...</span>
               </div>
 
-              <div v-else-if="workloadResult" class="result-content">
+              <div v-else-if="workloadResult" class="result-content" data-testid="eval-result">
                 <!-- 工作量汇总卡片 -->
-                <el-row :gutter="20" class="workload-summary">
+                <el-row :gutter="20" class="workload-summary" data-testid="workload-summary">
                   <el-col :span="6">
                     <el-statistic title="核心迁移工作量" :value="workloadResult.coreWorkload" suffix="人天" />
                   </el-col>
@@ -382,14 +383,14 @@
 
         <!-- 步骤操作按钮 -->
         <div class="step-actions">
-          <el-button v-if="currentStep > 1" @click="handlePrevStep">上一步</el-button>
-          <el-button v-if="currentStep < 3" type="primary" :disabled="!canNextStep" @click="handleNextStep">
+          <el-button v-if="currentStep > 1" data-testid="btn-prev-step" @click="handlePrevStep">上一步</el-button>
+          <el-button v-if="currentStep < 3" data-testid="btn-next-step" type="primary" :disabled="!canNextStep" @click="handleNextStep">
             下一步
           </el-button>
-          <el-button v-if="currentStep === 3" type="primary" :disabled="!canCalculate" :loading="calculating" @click="handleCalculate">
+          <el-button v-if="currentStep === 3" data-testid="btn-calculate" type="primary" :disabled="!canCalculate" :loading="calculating" @click="handleCalculate">
             计算工作量
           </el-button>
-          <el-button v-if="currentStep === 4" type="success" :disabled="!canComplete" :loading="completing" @click="handleComplete">
+          <el-button v-if="currentStep === 4" data-testid="btn-complete-evaluation" type="success" :disabled="!canComplete" :loading="completing" @click="handleComplete">
             完成评估
           </el-button>
         </div>
@@ -435,8 +436,10 @@ const calculating = ref(false)
 const completing = ref(false)
 const calculationLoading = ref(false)
 const currentStep = ref(1)
+const prevStep = ref(1)
 const metricsFormRef = ref<FormInstance>()
 const moduleTableRef = ref<InstanceType<typeof ElTable>>()
+const modulesLoaded = ref(false)
 
 // 项目信息
 const projectId = ref(0)
@@ -639,8 +642,11 @@ async function loadAvailableModules() {
         }
       })
 
-      // 更新选中模块列表
+      // 更新选中列表中的模块
       selectedModules.value = availableModules.value.filter(m => m.checked)
+
+      // 标记模块已加载
+      modulesLoaded.value = true
     }
   } catch {
     ElMessage.error('加载模块列表失败')
@@ -729,6 +735,7 @@ async function handleUserCountChange(value: number | null | undefined) {
  */
 function handlePrevStep() {
   if (currentStep.value > 1) {
+    prevStep.value = currentStep.value
     currentStep.value--
   }
 }
@@ -738,17 +745,21 @@ function handlePrevStep() {
  */
 async function handleNextStep() {
   if (currentStep.value < 4) {
-    // 加载模块列表（如果进入步骤二）
-    if (currentStep.value === 1) {
+    const fromStep = currentStep.value
+
+    // 加载模块列表（只在首次进入步骤二时加载一次）
+    if (currentStep.value === 1 && !modulesLoaded.value) {
       await loadAvailableModules()
     }
 
-    // 保存步骤二（模块配置）
-    if (currentStep.value === 2 && selectedModules.value.length > 0) {
+    // 保存当前步骤数据
+    // 从步骤2进入步骤3时，保存模块配置
+    if (fromStep === 2 && selectedModules.value.length > 0) {
       await saveModuleConfig(projectId.value, selectedModules.value)
       ElMessage.success('模块配置已保存')
     }
 
+    prevStep.value = currentStep.value
     currentStep.value++
   }
 }
@@ -758,12 +769,6 @@ async function handleNextStep() {
  */
 async function saveCurrentStepData() {
   try {
-    // 保存模块配置（步骤二）
-    if (currentStep.value === 2 && selectedModules.value.length > 0) {
-      await saveModuleConfig(projectId.value, selectedModules.value)
-      ElMessage.success('模块配置已保存')
-    }
-
     // 保存指标数据（步骤三）
     if (currentStep.value === 3) {
       await saveIndicators(projectId.value, metricsForm)

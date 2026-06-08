@@ -48,6 +48,7 @@
         <div class="action-buttons">
           <el-button
             v-if="projectInfo.status === 'DRAFT'"
+            data-testid="btn-start-evaluation"
             type="primary"
             @click="handleStartEvaluation"
           >
@@ -55,6 +56,7 @@
           </el-button>
           <el-button
             v-else-if="projectInfo.status === 'IN_PROGRESS'"
+            data-testid="btn-continue-evaluation"
             type="primary"
             @click="handleContinueEvaluation"
           >
@@ -62,6 +64,7 @@
           </el-button>
           <el-button
             v-if="projectInfo.hasEvaluation"
+            data-testid="btn-view-report"
             type="success"
             @click="handleViewReport"
           >

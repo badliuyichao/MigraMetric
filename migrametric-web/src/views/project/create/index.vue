@@ -26,6 +26,7 @@
         <el-form-item label="源系统" prop="sourceSystemId">
           <el-select
             v-model="formData.sourceSystemId"
+            data-testid="select-source-system"
             placeholder="请选择源系统"
             filterable
             style="width: 100%"
@@ -42,6 +43,7 @@
         <el-form-item label="目标系统" prop="targetSystemId">
           <el-select
             v-model="formData.targetSystemId"
+            data-testid="select-target-system"
             placeholder="请选择目标系统"
             filterable
             style="width: 100%"
@@ -84,8 +86,8 @@
 
         <el-form-item>
           <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSave">保存</el-button>
-          <el-button type="success" :loading="submitLoading" @click="handleSaveAndEvaluate">
+          <el-button data-testid="btn-save-project" type="primary" :loading="submitLoading" @click="handleSave">保存</el-button>
+          <el-button data-testid="btn-save-and-evaluate" type="success" :loading="submitLoading" @click="handleSaveAndEvaluate">
             保存并开始评估
           </el-button>
         </el-form-item>

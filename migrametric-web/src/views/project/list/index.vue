@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>项目列表</span>
-          <el-button type="primary" @click="router.push('/project/create')">
+          <el-button type="primary" data-testid="btn-create-project" @click="router.push('/project/create')">
             <el-icon><Plus /></el-icon>
             创建项目
           </el-button>
@@ -14,10 +14,10 @@
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="项目名称">
-          <el-input v-model="searchForm.projectName" placeholder="请输入项目名称" clearable />
+          <el-input v-model="searchForm.projectName" data-testid="search-project-name" placeholder="请输入项目名称" clearable />
         </el-form-item>
         <el-form-item label="客户名称">
-          <el-input v-model="searchForm.customerName" placeholder="请输入客户名称" clearable />
+          <el-input v-model="searchForm.customerName" data-testid="search-customer-name" placeholder="请输入客户名称" clearable />
         </el-form-item>
         <el-form-item label="项目状态">
           <el-select v-model="searchForm.status" placeholder="请选择" clearable>

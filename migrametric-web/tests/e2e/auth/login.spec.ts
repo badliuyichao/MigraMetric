@@ -3,6 +3,7 @@ import { testUsers } from '../../fixtures/users'
 
 test.describe('登录流程E2E测试', () => {
   test.beforeEach(async ({ page }) => {
+    await page.goto('/login')
     await page.evaluate(() => {
       localStorage.clear()
       sessionStorage.clear()

@@ -19,6 +19,7 @@
             placeholder="请输入用户名"
             :prefix-icon="User"
             size="large"
+            data-testid="username"
           />
         </el-form-item>
 
@@ -30,6 +31,7 @@
             :prefix-icon="Lock"
             size="large"
             show-password
+            data-testid="password"
             @keyup.enter="handleLogin"
           />
         </el-form-item>
@@ -41,6 +43,7 @@
             :loading="loading"
             class="login-btn"
             native-type="submit"
+            data-testid="login-button"
           >
             登 录
           </el-button>

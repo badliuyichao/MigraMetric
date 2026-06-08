@@ -36,3 +36,6 @@ dist-ssr
 # Test
 coverage
 *.test-results
+test-results/
+playwright-report/
+demo-screenshots/
