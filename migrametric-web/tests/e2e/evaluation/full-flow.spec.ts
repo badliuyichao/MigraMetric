@@ -1,6 +1,7 @@
 import { test, expect, type Page } from '@playwright/test'
 import { testUsers } from '../../fixtures/users'
 import { callApi, pickFromSelect, fillInputNumber, byTestId } from '../helpers/form-helpers'
+import { shot } from '../helpers/screenshot-helper'
 
 /**
  * E2E-FLOW-001: P0 核心流程
@@ -15,13 +16,9 @@ const CUSTOMER_NAME = 'E2E测试客户'
 const PROJECT_LEADER = '测试员'
 const CONTACT = '13800138000'
 const EVAL_DATE = '2026-06-08'
+const __specDir = 'full-flow'
 
 let capturedProjectId: number | null = null
-
-async function shot(page: Page, name: string) {
-  await page.screenshot({ path: `test-results/full-flow/${name}.png`, fullPage: true })
-  test.info().annotations.push({ type: 'screenshot', description: name })
-}
 
 test.describe('P0 核心流程 E2E', () => {
   test('E2E-FLOW-001: 登录 → 创建项目 → 四步评估 → 统计报告', async ({ page }) => {
@@ -34,7 +31,7 @@ test.describe('P0 核心流程 E2E', () => {
       await page.goto('/login')
       await byTestId(page, 'username').fill(testUsers.admin.username)
       await byTestId(page, 'password').fill(testUsers.admin.password)
-      await shot(page, '01-login-filled')
+      await shot(page, '01-login-filled', __specDir)
 
       const loginResp = page.waitForResponse(
         r => r.url().includes('/auth/login') && r.status() === 200,
@@ -43,7 +40,7 @@ test.describe('P0 核心流程 E2E', () => {
       await byTestId(page, 'login-button').click()
       await loginResp
       await page.waitForURL('**/dashboard', { timeout: 10000 })
-      await shot(page, '02-dashboard')
+      await shot(page, '02-dashboard', __specDir)
     })
 
     // ============================================================
@@ -52,7 +49,7 @@ test.describe('P0 核心流程 E2E', () => {
     let projectId: number
     await test.step('创建项目', async () => {
       await page.goto('/project/list')
-      await shot(page, '03-project-list')
+      await shot(page, '03-project-list', __specDir)
 
       await byTestId(page, 'btn-create-project').click()
       await page.waitForURL('**/project/create')
@@ -70,7 +67,7 @@ test.describe('P0 核心流程 E2E', () => {
       // 源/目标系统：filterable 下拉
       await pickFromSelect(page, 'select-source-system', 0)
       await pickFromSelect(page, 'select-target-system', 0)
-      await shot(page, '04-project-form-filled')
+      await shot(page, '04-project-form-filled', __specDir)
 
       // 捕获创建响应拿项目 ID
       const createResp = page.waitForResponse(
@@ -86,7 +83,7 @@ test.describe('P0 核心流程 E2E', () => {
       projectId = capturedProjectId!
 
       await page.waitForURL('**/project/list', { timeout: 10000 })
-      await shot(page, '05-project-list-after-create')
+      await shot(page, '05-project-list-after-create', __specDir)
     })
 
     // ============================================================
@@ -97,7 +94,7 @@ test.describe('P0 核心流程 E2E', () => {
       await byTestId(page, 'btn-start-evaluation').click()
       await page.waitForURL(`**/project/evaluate/${projectId}`)
       await page.waitForLoadState('networkidle')
-      await shot(page, '06-eval-step1-system-confirmation')
+      await shot(page, '06-eval-step1-system-confirmation', __specDir)
     })
 
     await test.step('Step 1 → Step 2：选择模块', async () => {
@@ -108,7 +105,7 @@ test.describe('P0 核心流程 E2E', () => {
         { timeout: 15000 }
       ).catch(() => { /* ignore — list 接口形态可能不是该 URL */ })
       await page.waitForSelector('[data-testid="module-table"] .el-table__row', { timeout: 15000 })
-      await shot(page, '07-eval-step2-modules-loaded')
+      await shot(page, '07-eval-step2-modules-loaded', __specDir)
 
       // 选前 3 个模块
       const checkboxes = page.locator('[data-testid="module-table"] .el-table__body-wrapper .el-checkbox')
@@ -119,7 +116,7 @@ test.describe('P0 核心流程 E2E', () => {
         await checkboxes.nth(i).click()
         await page.waitForTimeout(150)
       }
-      await shot(page, '08-eval-step2-modules-selected')
+      await shot(page, '08-eval-step2-modules-selected', __specDir)
 
       // 保存模块配置（点下一步触发）
       const saveModulesResp = page.waitForResponse(
@@ -133,7 +130,7 @@ test.describe('P0 核心流程 E2E', () => {
 
     await test.step('Step 3：填写指标', async () => {
       await page.waitForLoadState('networkidle')
-      await shot(page, '09-eval-step3-indicators')
+      await shot(page, '09-eval-step3-indicators', __specDir)
 
       await fillInputNumber(page, '请输入需要迁移的数据库表数量', 50)
       await fillInputNumber(page, '请输入数据总量', 500)
@@ -142,7 +139,7 @@ test.describe('P0 核心流程 E2E', () => {
       await fillInputNumber(page, '请输入系统用户总数', 3000)
       await page.waitForTimeout(800)
       await fillInputNumber(page, '请输入需要迁移的报表数量', 20)
-      await shot(page, '10-eval-step3-indicators-filled')
+      await shot(page, '10-eval-step3-indicators-filled', __specDir)
     })
 
     await test.step('Step 4：计算工作量', async () => {
@@ -153,7 +150,7 @@ test.describe('P0 核心流程 E2E', () => {
       await byTestId(page, 'btn-calculate').click()
       await calcResp
       await byTestId(page, 'eval-result').waitFor({ state: 'visible', timeout: 10000 })
-      await shot(page, '11-eval-step4-results')
+      await shot(page, '11-eval-step4-results', __specDir)
 
       // 校验：结果区应出现总工作量
       await expect(byTestId(page, 'workload-summary')).toBeVisible()
@@ -173,7 +170,7 @@ test.describe('P0 核心流程 E2E', () => {
       }
       await completeResp
       await page.waitForURL(`**/project/detail/${projectId}`, { timeout: 10000 })
-      await shot(page, '12-project-detail-after-eval')
+      await shot(page, '12-project-detail-after-eval', __specDir)
     })
 
     // ============================================================
@@ -184,15 +181,15 @@ test.describe('P0 核心流程 E2E', () => {
       await page.waitForLoadState('networkidle')
       // ECharts 渲染需要时间
       await page.waitForTimeout(2500)
-      await shot(page, '13-statistics-overview')
+      await shot(page, '13-statistics-overview', __specDir)
 
       await page.evaluate(() => window.scrollTo(0, 600))
       await page.waitForTimeout(600)
-      await shot(page, '14-statistics-charts')
+      await shot(page, '14-statistics-charts', __specDir)
 
       await page.evaluate(() => window.scrollTo(0, 1200))
       await page.waitForTimeout(600)
-      await shot(page, '15-statistics-risk-warnings')
+      await shot(page, '15-statistics-risk-warnings', __specDir)
     })
   })
 
