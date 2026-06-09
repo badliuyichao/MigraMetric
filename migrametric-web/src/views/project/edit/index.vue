@@ -23,16 +23,17 @@
         class="project-form"
       >
         <el-form-item label="项目名称" prop="projectName">
-          <el-input v-model="formData.projectName" placeholder="请输入项目名称" />
+          <el-input v-model="formData.projectName" data-testid="form-project-name" placeholder="请输入项目名称" />
         </el-form-item>
 
         <el-form-item label="客户名称" prop="customerName">
-          <el-input v-model="formData.customerName" placeholder="请输入客户名称" />
+          <el-input v-model="formData.customerName" data-testid="form-customer-name" placeholder="请输入客户名称" />
         </el-form-item>
 
         <el-form-item label="源系统" prop="sourceSystemId">
           <el-select
             v-model="formData.sourceSystemId"
+            data-testid="form-source-system"
             placeholder="请选择源系统"
             filterable
             style="width: 100%"
@@ -49,6 +50,7 @@
         <el-form-item label="目标系统" prop="targetSystemId">
           <el-select
             v-model="formData.targetSystemId"
+            data-testid="form-target-system"
             placeholder="请选择目标系统"
             filterable
             style="width: 100%"
@@ -63,16 +65,17 @@
         </el-form-item>
 
         <el-form-item label="项目负责人" prop="projectLeader">
-          <el-input v-model="formData.projectLeader" placeholder="请输入项目负责人" />
+          <el-input v-model="formData.projectLeader" data-testid="form-project-leader" placeholder="请输入项目负责人" />
         </el-form-item>
 
         <el-form-item label="联系方式" prop="contact">
-          <el-input v-model="formData.contact" placeholder="请输入联系方式" />
+          <el-input v-model="formData.contact" data-testid="form-contact" placeholder="请输入联系方式" />
         </el-form-item>
 
         <el-form-item label="评估日期" prop="evaluationDate">
           <el-date-picker
             v-model="formData.evaluationDate"
+            data-testid="form-evaluation-date"
             type="date"
             placeholder="请选择评估日期"
             value-format="YYYY-MM-DD"
@@ -83,6 +86,7 @@
         <el-form-item label="项目描述" prop="description">
           <el-input
             v-model="formData.description"
+            data-testid="form-description"
             type="textarea"
             :rows="4"
             placeholder="请输入项目描述"
@@ -90,8 +94,8 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button @click="handleCancel">取消</el-button>
-          <el-button type="primary" :loading="submitLoading" @click="handleSave">保存</el-button>
+          <el-button data-testid="btn-cancel" @click="handleCancel">取消</el-button>
+          <el-button type="primary" data-testid="btn-save" :loading="submitLoading" @click="handleSave">保存</el-button>
         </el-form-item>
       </el-form>
     </el-card>

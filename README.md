@@ -30,38 +30,45 @@ MigraMetric 是一款用于评估和量化企业异构系统升迁工作量的�
 ```
 MigraMetric/
 ├── docs/                      # 项目文档
-│   └── 设计文档.md
+│   ├── architecture/         # 需求/产品/技术/数据库设计
+│   ├── develop/              # 开发计划
+│   ├── implementation/       # 实施记录
+│   └── test-reports/         # E2E 测试报告（按日期归档）
+├── memory/                    # 项目知识库（CLAUDE 协作维护）
+│   ├── MEMORY.md             # 索引
+│   ├── project_overview.md   # 项目概览
+│   ├── coding_standards.md   # 编码规范
+│   ├── playwright_e2e_patterns.md  # E2E 模式与坑
+│   └── ...                    # 其他专题
 ├── migrametric-server/        # 后端服务
-│   ├── src/
-│   │   ├── main/
-│   │   │   ├── java/com/migrametric/
-│   │   │   │   ├── config/      # 配置类
-│   │   │   │   ├── controller/   # 控制器
-│   │   │   │   ├── service/      # 服务层
-│   │   │   │   ├── mapper/       # 持久层
-│   │   │   │   ├── entity/       # 实体类
-│   │   │   │   ├── dto/          # 数据传输对象
-│   │   │   │   ├── vo/           # 视图对象
-│   │   │   │   ├── common/       # 公共类
-│   │   │   │   └── util/         # 工具类
-│   │   │   └── resources/        # 配置文件
-│   │   └── test/                 # 测试代码
-│   └── README.md
+│   └── src/
+│       └── main/java/com/migrametric/
+│           ├── config/      # 配置类（含 SecurityConfig、RBAC 启用）
+│           ├── controller/   # 控制器（admin 端点带 @PreAuthorize）
+│           ├── service/      # 服务层
+│           ├── mapper/       # 持久层
+│           ├── entity/       # 实体类
+│           ├── dto/          # 数据传输对象
+│           ├── vo/           # 视图对象
+│           ├── common/       # Result/ResultCode/全局异常处理
+│           └── util/         # 工具类
 ├── migrametric-web/           # 前端项目
 │   ├── src/
-│   │   ├── api/                # API接口
-│   │   ├── assets/             # 静态资源
-│   │   ├── components/         # 组件
-│   │   ├── composables/        # 组合式函数
-│   │   ├── layouts/            # 布局
-│   │   ├── router/             # 路由
-│   │   ├── stores/             # 状态管理
-│   │   ├── styles/             # 样式
-│   │   ├── utils/              # 工具函数
-│   │   └── views/              # 页面
-│   └── README.md
+│   │   ├── api/              # API 模块
+│   │   ├── components/       # 可复用组件
+│   │   ├── composables/      # Vue Composition API
+│   │   ├── layouts/          # 布局
+│   │   ├── router/           # 路由 + 权限守卫
+│   │   ├── stores/           # Pinia
+│   │   ├── utils/            # 工具（request.ts 业务码处理）
+│   │   └── views/            # 页面
+│   └── tests/
+│       ├── e2e/              # Playwright E2E（headed + 每步截图）
+│       ├── fixtures/         # 测试数据
+│       └── visual/           # 视觉回归
 ├── LICENSE
-└── README.md
+├── README.md
+└── CLAUDE.md                  # 给 Claude Code 的协作规则
 ```
 
 ## 技术栈
@@ -133,11 +140,25 @@ pnpm dev
 
 - 前端地址: http://localhost:3000
 - 后端API文档: http://localhost:8080/swagger-ui.html
+- 默认账号: `admin / admin123`
+
+## E2E 测试
+
+本项目用 [Playwright](https://playwright.dev/) 跑 E2E，**必须 headed + 每步截图**（见 `migrametric-web/tests/README.md`）：
+
+```bash
+cd migrametric-web
+node node_modules/@playwright/test/cli.js test --project=e2e --headed --workers=1
+```
+
+报告归档到 `docs/test-reports/e2e-test-report-YYYY-MM-DD.md`，截图落在 `migrametric-web/test-results/<specName>/`。最新报告：[`docs/test-reports/`](./docs/test-reports/)。
 
 ## 子项目文档
 
 - [后端服务文档](./migrametric-server/README.md)
 - [前端项目文档](./migrametric-web/README.md)
+- [给 Claude 的协作规则](./CLAUDE.md)
+- [项目知识库索引](./memory/MEMORY.md)
 
 ## 许可证
 

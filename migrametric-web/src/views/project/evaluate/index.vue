@@ -27,7 +27,7 @@
         <!-- 步骤内容区域 -->
         <div class="step-content">
           <!-- 步骤一：系统确认 -->
-          <div v-show="currentStep === 1" class="step-panel">
+          <div v-if="currentStep === 1" class="step-panel">
             <el-card shadow="never">
               <template #header>
                 <span>系统确认</span>
@@ -79,7 +79,7 @@
           </div>
 
           <!-- 步骤二：选择模块 -->
-          <div v-show="currentStep === 2" class="step-panel">
+          <div v-if="currentStep === 2" class="step-panel">
             <el-card shadow="never">
               <template #header>
                 <span>选择迁移模块</span>
@@ -140,7 +140,7 @@
           </div>
 
           <!-- 步骤三：填写指标 -->
-          <div v-show="currentStep === 3" class="step-panel">
+          <div v-if="currentStep === 3" class="step-panel">
             <el-card shadow="never">
               <template #header>
                 <span>填写评估指标</span>
@@ -280,7 +280,7 @@
           </div>
 
           <!-- 步骤四：查看结果 -->
-          <div v-show="currentStep === 4" class="step-panel">
+          <div v-if="currentStep === 4" class="step-panel">
             <el-card shadow="never">
               <template #header>
                 <span>工作量评估结果</span>
@@ -659,8 +659,11 @@ async function loadAvailableModules() {
  */
 function handleSelectionChange(selection: ModuleConfigItem[]) {
   selectedModules.value = selection.map(mod => {
-    if (!mod.weight) {
-      mod.weight = mod.defaultWeight
+    // selection 来自 el-table @selection-change，里面的 mod 是用户当前选中的行
+    // 后端 saveModuleConfig 要求 checked=true 才入库，所以这里必须显式打 true
+    mod.checked = true
+    if (mod.weight == null) {
+      mod.weight = mod.defaultWeight ?? 1.0
     }
     return mod
   })

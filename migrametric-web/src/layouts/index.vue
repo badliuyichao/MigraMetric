@@ -74,7 +74,7 @@
           </el-breadcrumb>
         </div>
         <div class="header-right">
-          <el-dropdown @command="handleCommand">
+          <el-dropdown @command="handleCommand" data-testid="user-menu">
             <span class="user-info">
               <el-avatar :size="32" :icon="UserFilled" />
               <span class="username">{{ userStore.userName }}</span>
@@ -84,7 +84,7 @@
               <el-dropdown-menu>
                 <el-dropdown-item command="profile">个人中心</el-dropdown-item>
                 <el-dropdown-item command="password">修改密码</el-dropdown-item>
-                <el-dropdown-item divided command="logout">退出登录</el-dropdown-item>
+                <el-dropdown-item divided command="logout" data-testid="logout-button">退出登录</el-dropdown-item>
               </el-dropdown-menu>
             </template>
           </el-dropdown>

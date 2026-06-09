@@ -2,6 +2,7 @@ package com.migrametric.dto.config;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
@@ -23,7 +24,7 @@ public class ReportConfigUpdateDTO implements Serializable {
     /**
      * 配置ID
      */
-    @NotBlank(message = "配置ID不能为空")
+    @NotNull(message = "配置ID不能为空")
     @Schema(description = "配置ID")
     private Long id;
 

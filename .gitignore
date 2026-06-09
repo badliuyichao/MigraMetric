@@ -76,3 +76,7 @@ jacoco/
 *.tmp
 *.bak
 *.swp
+
+# 后端误生成的 npm 锁文件（migrametric-server 是 Java 项目，不该有 package-lock.json）
+migrametric-server/package-lock.json
+migrametric-server/node_modules/

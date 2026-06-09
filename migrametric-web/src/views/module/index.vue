@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>模块库管理</span>
-          <el-button type="primary" @click="handleAdd">
+          <el-button type="primary" @click="handleAdd" data-testid="btn-add-module">
             <el-icon><Plus /></el-icon>
             新增模块
           </el-button>
@@ -14,10 +14,10 @@
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="模块名称">
-          <el-input v-model="searchForm.moduleName" placeholder="请输入模块名称" clearable />
+          <el-input v-model="searchForm.moduleName" data-testid="search-module-name" placeholder="请输入模块名称" clearable />
         </el-form-item>
         <el-form-item label="所属系统">
-          <el-select v-model="searchForm.systemId" placeholder="请选择" clearable filterable>
+          <el-select v-model="searchForm.systemId" data-testid="search-system-id" placeholder="请选择" clearable filterable>
             <el-option
               v-for="system in systemList"
               :key="system.id"
@@ -27,7 +27,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="模块分类">
-          <el-select v-model="searchForm.category" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.category" data-testid="search-category" placeholder="请选择" clearable>
             <el-option
               v-for="cat in categoryList"
               :key="cat"
@@ -37,19 +37,19 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
             <el-option label="启用" :value="1" />
             <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch" data-testid="btn-search">查询</el-button>
+          <el-button @click="handleReset" data-testid="btn-reset">重置</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" data-testid="table-module" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="moduleName" label="模块名称" min-width="120" />
         <el-table-column prop="systemName" label="所属系统" width="120">
@@ -103,10 +103,10 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="600px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px">
         <el-form-item label="模块名称" prop="moduleName">
-          <el-input v-model="formData.moduleName" placeholder="请输入模块名称" />
+          <el-input v-model="formData.moduleName" data-testid="form-module-name" placeholder="请输入模块名称" />
         </el-form-item>
         <el-form-item label="所属系统" prop="systemId">
-          <el-select v-model="formData.systemId" placeholder="请选择所属系统" filterable>
+          <el-select v-model="formData.systemId" data-testid="form-system-id" placeholder="请选择所属系统" filterable>
             <el-option
               v-for="system in enabledSystemList"
               :key="system.id"
@@ -116,11 +116,12 @@
           </el-select>
         </el-form-item>
         <el-form-item label="模块分类" prop="category">
-          <el-input v-model="formData.category" placeholder="请输入模块分类，如：财务模块" />
+          <el-input v-model="formData.category" data-testid="form-category" placeholder="请输入模块分类，如：财务模块" />
         </el-form-item>
         <el-form-item label="基础工作量" prop="baseWorkload">
           <el-input-number
             v-model="formData.baseWorkload"
+            data-testid="form-base-workload"
             :min="0"
             :precision="2"
             :step="1"
@@ -131,6 +132,7 @@
         <el-form-item label="加权系数" prop="defaultWeight">
           <el-input-number
             v-model="formData.defaultWeight"
+            data-testid="form-default-weight"
             :min="0"
             :max="999.99"
             :precision="2"
@@ -141,6 +143,7 @@
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="formData.description"
+            data-testid="form-description"
             type="textarea"
             :rows="3"
             placeholder="请输入描述"
@@ -148,8 +151,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false" data-testid="btn-cancel">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" data-testid="btn-submit" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>

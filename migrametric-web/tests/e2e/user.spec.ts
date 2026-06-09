@@ -23,7 +23,9 @@ import { shot } from './helpers/screenshot-helper'
  * - 角色权限矩阵的逐项验证（仅验证最关键的 admin-only 边界）
  */
 
-const UNIQUE = () => `e2euser${Date.now()}`
+// 用户名长度必须满足前端 validateUsername 规则（4-20 字母数字下划线）：
+// "e2eu" (4) + Date.now() 后 7 位 = 总长 11，留余量
+const UNIQUE = () => `e2eu${(Date.now() % 10000000).toString().padStart(7, '0')}`
 const __specDir = 'user'
 
 test.describe('第六阶段·用户与权限 E2E', () => {
@@ -165,14 +167,14 @@ test.describe('第六阶段·用户与权限 E2E', () => {
       headers: auth,
     })
 
-    // 再登录应失败（USER_DISABLED 业务码 10003 之类）
+    // 再登录应失败（USER_DISABLED 业务码 10005：HTTP 200 + body.code=10005）
     const failLogin = await page.request.post('http://localhost:3000/api/auth/login', {
       data: { username, password: 'activepwd' },
       failOnStatusCode: false,
     })
-    expect(failLogin.status(), '禁用态用户登录应被拒绝（业务码 4xx）').toBe(400)
+    expect(failLogin.status(), '禁用态用户登录应返回 HTTP 200（业务码走 Result.code，非 HTTP 4xx）').toBe(200)
     const failBody = await failLogin.json()
-    expect(failBody.code, '应返回 USER_DISABLED 业务码（非通用 USERNAME_PASSWORD_ERROR）').not.toBe(10001)
+    expect(failBody.code, '应返回 USER_DISABLED 业务码 10005').toBe(10005)
 
     // 浏览器端复现：跳登录页用禁用账号提交，截错误 toast
     // 走真实 UI 而非 page.request，证明前端 USER_DISABLED 错误提示确实渲染

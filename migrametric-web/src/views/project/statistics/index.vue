@@ -14,17 +14,17 @@
       </template>
 
       <!-- 总工作量展示 -->
-      <div class="total-workload-section">
+      <div class="total-workload-section" data-testid="section-total-workload">
         <el-row :gutter="20">
           <el-col :span="8">
-            <el-statistic title="总工作量" :value="statistics.totalWorkload" suffix="人天">
+            <el-statistic title="总工作量" :value="statistics.totalWorkload" suffix="人天" data-testid="stat-total-workload">
               <template #prefix>
                 <el-icon><Calendar /></el-icon>
               </template>
             </el-statistic>
           </el-col>
           <el-col :span="8">
-            <el-statistic title="预估工期" :value="statistics.estimatedMonths" suffix="人月">
+            <el-statistic title="预估工期" :value="statistics.estimatedMonths" suffix="人月" data-testid="stat-estimated-months">
               <template #prefix>
                 <el-icon><Clock /></el-icon>
               </template>
@@ -34,7 +34,7 @@
             </el-statistic>
           </el-col>
           <el-col :span="8">
-            <el-statistic title="已选模块数" :value="statistics.evaluationOverview?.moduleCount || 0" suffix="个">
+            <el-statistic title="已选模块数" :value="statistics.evaluationOverview?.moduleCount || 0" suffix="个" data-testid="stat-module-count">
               <template #prefix>
                 <el-icon><Box /></el-icon>
               </template>
@@ -47,12 +47,12 @@
       <el-row :gutter="20" class="charts-section">
         <!-- 工作量类型分布饼图 -->
         <el-col :span="8">
-          <el-card shadow="hover">
+          <el-card shadow="hover" data-testid="card-workload-type-pie">
             <template #header>
               <span class="card-title">工作量类型分布</span>
             </template>
-            <div ref="pieChartRef" class="chart-container"></div>
-            <div class="chart-legend">
+            <div ref="pieChartRef" class="chart-container" data-testid="chart-pie-workload"></div>
+            <div class="chart-legend" data-testid="legend-pie">
               <div v-for="item in statistics.workloadTypeDistribution" :key="item.type" class="legend-item">
                 <span class="legend-color" :style="{ backgroundColor: getPieColor(item.type) }"></span>
                 <span class="legend-text">{{ item.type }}</span>
@@ -65,11 +65,11 @@
 
         <!-- 模块工作量对比柱状图 -->
         <el-col :span="16">
-          <el-card shadow="hover">
+          <el-card shadow="hover" data-testid="card-module-bar">
             <template #header>
               <span class="card-title">模块工作量对比</span>
             </template>
-            <div ref="barChartRef" class="chart-container bar-chart"></div>
+            <div ref="barChartRef" class="chart-container bar-chart" data-testid="chart-bar-modules"></div>
           </el-card>
         </el-col>
       </el-row>
@@ -78,12 +78,12 @@
       <el-row :gutter="20" class="charts-section">
         <!-- 多维度评估雷达图 -->
         <el-col :span="12">
-          <el-card shadow="hover">
+          <el-card shadow="hover" data-testid="card-radar">
             <template #header>
               <span class="card-title">多维度评估指标</span>
             </template>
-            <div ref="radarChartRef" class="chart-container"></div>
-            <div class="indicators-table">
+            <div ref="radarChartRef" class="chart-container" data-testid="chart-radar"></div>
+            <div class="indicators-table" data-testid="desc-indicators">
               <el-descriptions :column="2" border size="small">
                 <el-descriptions-item label="数据量">
                   {{ statistics.multiDimensionIndicators?.dataVolumeActual }} ({{ statistics.multiDimensionIndicators?.dataVolumeLadder }})
@@ -104,11 +104,11 @@
 
         <!-- 风险提示 -->
         <el-col :span="12">
-          <el-card shadow="hover">
+          <el-card shadow="hover" data-testid="card-risk-warnings">
             <template #header>
               <span class="card-title">风险提示与建议</span>
             </template>
-            <div v-if="statistics.riskWarnings && statistics.riskWarnings.length > 0" class="risk-list">
+            <div v-if="statistics.riskWarnings && statistics.riskWarnings.length > 0" class="risk-list" data-testid="risk-list">
               <el-alert
                 v-for="(warning, index) in statistics.riskWarnings"
                 :key="index"
@@ -118,15 +118,18 @@
                 :closable="false"
                 show-icon
                 class="risk-item"
+                :data-testid="`risk-item-${index}`"
               />
             </div>
-            <el-empty v-else description="暂无风险提示" />
+            <div v-else data-testid="risk-empty" class="empty-wrap">
+              <el-empty description="暂无风险提示" />
+            </div>
           </el-card>
         </el-col>
       </el-row>
 
       <!-- 评估指标概览 -->
-      <el-row :gutter="20" class="overview-section">
+      <el-row :gutter="20" class="overview-section" data-testid="section-overview">
         <el-col :span="24">
           <el-card shadow="hover">
             <template #header>

@@ -20,7 +20,7 @@
       </el-alert>
 
       <!-- 配置表格 -->
-      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" data-testid="table-report-config" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="configName" label="配置名称" min-width="200" />
         <el-table-column prop="configKey" label="配置键" width="250">
@@ -54,6 +54,7 @@
         <el-form-item label="配置值" prop="configValue">
           <el-input-number
             v-model="formData.configValue"
+            data-testid="form-config-value"
             :min="0"
             :max="999.99"
             :precision="2"
@@ -67,8 +68,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">保存</el-button>
+        <el-button @click="dialogVisible = false" data-testid="btn-cancel">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" data-testid="btn-submit" @click="handleSubmit">保存</el-button>
       </template>
     </el-dialog>
   </div>

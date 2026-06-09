@@ -54,9 +54,8 @@ public class UserCountLadderCreateDTO implements Serializable {
     private BigDecimal weight;
 
     /**
-     * 排序顺序
+     * 排序顺序（NULL 时由 service 层自动分配为 max+1）
      */
-    @NotNull(message = "排序顺序不能为空")
     @Min(value = 0, message = "排序顺序不能小于0")
     @Schema(description = "排序顺序")
     private Integer sortOrder;

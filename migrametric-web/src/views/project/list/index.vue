@@ -20,7 +20,7 @@
           <el-input v-model="searchForm.customerName" data-testid="search-customer-name" placeholder="请输入客户名称" clearable />
         </el-form-item>
         <el-form-item label="项目状态">
-          <el-select v-model="searchForm.status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
             <el-option label="草稿" value="DRAFT" />
             <el-option label="进行中" value="IN_PROGRESS" />
             <el-option label="已完成" value="COMPLETED" />
@@ -28,13 +28,13 @@
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" data-testid="btn-search" @click="handleSearch">查询</el-button>
+          <el-button data-testid="btn-reset" @click="handleReset">重置</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" data-testid="table-project" stripe border style="width: 100%">
         <template #empty>
           <EmptyState description="暂无项目，请先创建项目">
             <el-button type="primary" @click="router.push('/project/create')">
@@ -65,11 +65,11 @@
         <el-table-column prop="createTime" label="创建时间" width="160" />
         <el-table-column label="操作" width="280" fixed="right">
           <template #default="{ row }">
-            <el-button type="primary" link @click="handleView(row)">查看</el-button>
-            <el-button v-if="row.status === 'DRAFT'" type="warning" link @click="handleEdit(row)">编辑</el-button>
-            <el-button v-if="row.status === 'DRAFT'" type="danger" link @click="handleDelete(row)">删除</el-button>
-            <el-button type="info" link @click="handleCopy(row)">复制</el-button>
-            <el-button v-if="row.status === 'COMPLETED'" type="success" link @click="handleArchive(row)">归档</el-button>
+            <el-button type="primary" link data-testid="btn-view-row" @click="handleView(row)">查看</el-button>
+            <el-button v-if="row.status === 'DRAFT'" type="warning" link data-testid="btn-edit-row" @click="handleEdit(row)">编辑</el-button>
+            <el-button v-if="row.status === 'DRAFT'" type="danger" link data-testid="btn-delete-row" @click="handleDelete(row)">删除</el-button>
+            <el-button type="info" link data-testid="btn-copy-row" @click="handleCopy(row)">复制</el-button>
+            <el-button v-if="row.status === 'COMPLETED'" type="success" link data-testid="btn-archive-row" @click="handleArchive(row)">归档</el-button>
           </template>
         </el-table-column>
       </el-table>

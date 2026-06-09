@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>系统类型管理</span>
-          <el-button type="primary" @click="handleAdd">
+          <el-button type="primary" @click="handleAdd" data-testid="btn-add-system-type">
             <el-icon><Plus /></el-icon>
             新增系统类型
           </el-button>
@@ -14,28 +14,28 @@
       <!-- 搜索表单 -->
       <el-form :inline="true" :model="searchForm" class="search-form">
         <el-form-item label="系统名称">
-          <el-input v-model="searchForm.systemName" placeholder="请输入系统名称" clearable />
+          <el-input v-model="searchForm.systemName" data-testid="search-system-name" placeholder="请输入系统名称" clearable />
         </el-form-item>
         <el-form-item label="系统类型">
-          <el-select v-model="searchForm.systemCategory" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.systemCategory" data-testid="search-system-category" placeholder="请选择" clearable>
             <el-option label="源系统" :value="1" />
             <el-option label="目标系统" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
             <el-option label="启用" :value="1" />
             <el-option label="禁用" :value="0" />
           </el-select>
         </el-form-item>
         <el-form-item>
-          <el-button type="primary" @click="handleSearch">查询</el-button>
-          <el-button @click="handleReset">重置</el-button>
+          <el-button type="primary" @click="handleSearch" data-testid="btn-search">查询</el-button>
+          <el-button @click="handleReset" data-testid="btn-reset">重置</el-button>
         </el-form-item>
       </el-form>
 
       <!-- 数据表格 -->
-      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" data-testid="table-system-type" stripe border style="width: 100%">
         <template #empty>
           <EmptyState description="暂无系统类型，请先添加">
             <el-button type="primary" @click="handleAdd">
@@ -91,10 +91,10 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="100px">
         <el-form-item label="系统名称" prop="systemName">
-          <el-input v-model="formData.systemName" placeholder="请输入系统名称" />
+          <el-input v-model="formData.systemName" data-testid="form-system-name" placeholder="请输入系统名称" />
         </el-form-item>
         <el-form-item label="系统类型" prop="systemCategory">
-          <el-radio-group v-model="formData.systemCategory">
+          <el-radio-group v-model="formData.systemCategory" data-testid="form-system-category">
             <el-radio :label="1">源系统</el-radio>
             <el-radio :label="2">目标系统</el-radio>
           </el-radio-group>
@@ -102,6 +102,7 @@
         <el-form-item label="描述" prop="description">
           <el-input
             v-model="formData.description"
+            data-testid="form-description"
             type="textarea"
             :rows="3"
             placeholder="请输入描述"
@@ -109,8 +110,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false" data-testid="btn-cancel">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" data-testid="btn-submit" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>

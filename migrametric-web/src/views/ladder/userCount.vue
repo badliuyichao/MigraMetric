@@ -4,7 +4,7 @@
       <template #header>
         <div class="card-header">
           <span>用户数阶梯配置</span>
-          <el-button type="primary" @click="handleAdd">
+          <el-button type="primary" @click="handleAdd" data-testid="btn-add-ladder">
             <el-icon><Plus /></el-icon>
             新增阶梯
           </el-button>
@@ -24,7 +24,7 @@
       </el-alert>
 
       <!-- 数据表格 -->
-      <el-table v-loading="loading" :data="tableData" stripe border style="width: 100%">
+      <el-table v-loading="loading" :data="tableData" data-testid="table-user-count-ladder" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="80" />
         <el-table-column prop="ladderName" label="阶梯名称" width="150">
           <template #default="{ row }">
@@ -58,11 +58,12 @@
     <el-dialog v-model="dialogVisible" :title="dialogTitle" width="500px" @close="handleDialogClose">
       <el-form ref="formRef" :model="formData" :rules="formRules" label-width="120px">
         <el-form-item label="阶梯名称" prop="ladderName">
-          <el-input v-model="formData.ladderName" placeholder="如：小规模、中规模、大规模" />
+          <el-input v-model="formData.ladderName" data-testid="form-ladder-name" placeholder="如：小规模、中规模、大规模" />
         </el-form-item>
         <el-form-item label="用户数下限" prop="minCount">
           <el-input-number
             v-model="formData.minCount"
+            data-testid="form-min-count"
             :min="0"
             :step="1"
             style="width: 100%"
@@ -72,6 +73,7 @@
         <el-form-item label="用户数上限" prop="maxCount">
           <el-input-number
             v-model="formData.maxCount"
+            data-testid="form-max-count"
             :min="0"
             :step="1"
             style="width: 100%"
@@ -82,6 +84,7 @@
         <el-form-item label="工作量系数" prop="weight">
           <el-input-number
             v-model="formData.weight"
+            data-testid="form-weight"
             :min="0"
             :max="99.99"
             :precision="2"
@@ -91,8 +94,8 @@
         </el-form-item>
       </el-form>
       <template #footer>
-        <el-button @click="dialogVisible = false">取消</el-button>
-        <el-button type="primary" :loading="submitLoading" @click="handleSubmit">确定</el-button>
+        <el-button @click="dialogVisible = false" data-testid="btn-cancel">取消</el-button>
+        <el-button type="primary" :loading="submitLoading" data-testid="btn-submit" @click="handleSubmit">确定</el-button>
       </template>
     </el-dialog>
   </div>

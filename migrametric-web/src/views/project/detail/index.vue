@@ -19,7 +19,7 @@
           </div>
         </template>
 
-        <el-descriptions :column="2" border>
+        <el-descriptions :column="2" border data-testid="descriptions-project-info">
           <el-descriptions-item label="项目名称">{{ projectInfo.projectName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="客户名称">{{ projectInfo.customerName || '-' }}</el-descriptions-item>
           <el-descriptions-item label="源系统">
@@ -32,7 +32,7 @@
           <el-descriptions-item label="联系方式">{{ projectInfo.contact || '-' }}</el-descriptions-item>
           <el-descriptions-item label="评估日期">{{ projectInfo.evaluationDate || '-' }}</el-descriptions-item>
           <el-descriptions-item label="项目状态">
-            <el-tag :type="getStatusType(projectInfo.status)">
+            <el-tag :type="getStatusType(projectInfo.status)" data-testid="project-status">
               {{ projectInfo.statusText || '-' }}
             </el-tag>
           </el-descriptions-item>
@@ -71,9 +71,9 @@
             查看报告
           </el-button>
           <el-button @click="handleExport">导出报告</el-button>
-          <el-button v-if="projectInfo.status === 'DRAFT'" @click="handleCopy">复制项目</el-button>
-          <el-button v-if="projectInfo.status === 'COMPLETED'" type="warning" @click="handleArchive">归档项目</el-button>
-          <el-button v-if="projectInfo.status === 'DRAFT'" type="danger" @click="handleDelete">删除项目</el-button>
+          <el-button v-if="projectInfo.status === 'DRAFT'" data-testid="btn-copy-project" @click="handleCopy">复制项目</el-button>
+          <el-button v-if="projectInfo.status === 'COMPLETED'" type="warning" data-testid="btn-archive-project" @click="handleArchive">归档项目</el-button>
+          <el-button v-if="projectInfo.status === 'DRAFT'" type="danger" data-testid="btn-delete-project" @click="handleDelete">删除项目</el-button>
         </div>
       </el-card>
 

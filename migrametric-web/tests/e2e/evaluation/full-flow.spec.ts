@@ -24,6 +24,15 @@ test.describe('P0 核心流程 E2E', () => {
   test('E2E-FLOW-001: 登录 → 创建项目 → 四步评估 → 统计报告', async ({ page }) => {
     test.setTimeout(120_000)
 
+    // 捕获浏览器 console 用于 E2E 诊断
+    page.on('console', msg => {
+      const text = msg.text()
+      if (text.includes('E2E-DIAG') || msg.type() === 'error') {
+        console.log(`[browser-${msg.type()}]`, text)
+      }
+    })
+    page.on('pageerror', err => console.log('[browser-pageerror]', err.message))
+
     // ============================================================
     // 阶段 1：登录
     // ============================================================
@@ -129,7 +138,10 @@ test.describe('P0 核心流程 E2E', () => {
     })
 
     await test.step('Step 3：填写指标', async () => {
-      await page.waitForLoadState('networkidle')
+      // 等步骤切到 step 3：btn-calculate 只在 currentStep===3 时渲染，是 step 3 落地的最强信号
+      await byTestId(page, 'btn-calculate').waitFor({ state: 'visible', timeout: 15000 })
+      const tableCountInput = page.locator('input[placeholder="请输入需要迁移的数据库表数量"]')
+      await tableCountInput.waitFor({ state: 'visible', timeout: 15000 })
       await shot(page, '09-eval-step3-indicators', __specDir)
 
       await fillInputNumber(page, '请输入需要迁移的数据库表数量', 50)

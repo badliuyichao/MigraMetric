@@ -14,6 +14,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 /**
@@ -25,6 +26,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/users")
+@PreAuthorize("hasRole('ADMIN')")
 @Tag(name = "用户管理", description = "用户CRUD相关接口")
 public class UserController {
 
@@ -48,7 +50,7 @@ public class UserController {
     @Operation(summary = "更新用户", description = "更新用户信息")
     public Result<Void> updateUser(
             @Parameter(description = "用户ID", required = true)
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Valid @RequestBody UserUpdateDTO dto) {
         log.info("更新用户请求, userId: {}", userId);
         dto.setId(userId);
@@ -63,7 +65,7 @@ public class UserController {
     @Operation(summary = "删除用户", description = "删除用户")
     public Result<Void> deleteUser(
             @Parameter(description = "用户ID", required = true)
-            @PathVariable Long userId) {
+            @PathVariable("userId") Long userId) {
         log.info("删除用户请求, userId: {}", userId);
         userService.deleteUser(userId);
         return Result.success();
@@ -76,7 +78,7 @@ public class UserController {
     @Operation(summary = "获取用户详情", description = "根据ID获取用户信息")
     public Result<UserVO> getUserById(
             @Parameter(description = "用户ID", required = true)
-            @PathVariable Long userId) {
+            @PathVariable("userId") Long userId) {
         UserVO userVO = userService.getUserById(userId);
         return Result.success(userVO);
     }
@@ -110,9 +112,9 @@ public class UserController {
     @Operation(summary = "修改用户状态", description = "启用或禁用用户")
     public Result<Void> updateStatus(
             @Parameter(description = "用户ID", required = true)
-            @PathVariable Long userId,
+            @PathVariable("userId") Long userId,
             @Parameter(description = "状态：0-禁用，1-启用", required = true)
-            @RequestParam Integer status) {
+            @RequestParam("status") Integer status) {
         log.info("修改用户状态请求, userId: {}, status: {}", userId, status);
         userService.updateStatus(userId, status);
         return Result.success();
@@ -125,9 +127,9 @@ public class UserController {
     @Operation(summary = "检查用户名", description = "检查用户名是否已存在")
     public Result<Boolean> checkUsername(
             @Parameter(description = "用户名", required = true)
-            @RequestParam String username,
+            @RequestParam("username") String username,
             @Parameter(description = "排除的用户ID")
-            @RequestParam(required = false) Long excludeId) {
+            @RequestParam(value = "excludeId", required = false) Long excludeId) {
         boolean exists = userService.isUsernameExists(username, excludeId);
         return Result.success(exists);
     }
