@@ -16,4 +16,11 @@ public interface StatisticsService {
      * @return 统计结果VO
      */
     StatisticsResultVO getStatistics(Long projectId);
+
+    /**
+     * 获取首页仪表盘概览
+     *
+     * @return 仪表盘概览VO
+     */
+    StatisticsResultVO.DashboardOverview getOverview();
 }

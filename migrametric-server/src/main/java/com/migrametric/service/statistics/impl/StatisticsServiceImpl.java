@@ -8,11 +8,15 @@ import com.migrametric.entity.evaluation.ProjectModuleConfig;
 import com.migrametric.entity.ladder.DataVolumeLadder;
 import com.migrametric.entity.ladder.UserCountLadder;
 import com.migrametric.entity.module.Module;
+import com.migrametric.entity.project.Project;
+import com.migrametric.entity.user.User;
 import com.migrametric.mapper.evaluation.EvaluationMapper;
 import com.migrametric.mapper.evaluation.ProjectModuleConfigMapper;
 import com.migrametric.mapper.ladder.DataVolumeLadderMapper;
 import com.migrametric.mapper.ladder.UserCountLadderMapper;
 import com.migrametric.mapper.module.ModuleMapper;
+import com.migrametric.mapper.project.ProjectMapper;
+import com.migrametric.mapper.user.UserMapper;
 import com.migrametric.service.statistics.StatisticsService;
 import com.migrametric.vo.statistics.StatisticsResultVO;
 import lombok.RequiredArgsConstructor;
@@ -50,6 +54,8 @@ public class StatisticsServiceImpl implements StatisticsService {
     private final ModuleMapper moduleMapper;
     private final DataVolumeLadderMapper dataVolumeLadderMapper;
     private final UserCountLadderMapper userCountLadderMapper;
+    private final ProjectMapper projectMapper;
+    private final UserMapper userMapper;
 
     /**
      * 工期计算常量（人天/人月）
@@ -88,15 +94,34 @@ public class StatisticsServiceImpl implements StatisticsService {
         // 1. 查询评估记录
         Evaluation evaluation = getEvaluationByProjectId(projectId);
 
+        // 无评估记录时返回空默认结果（而非抛异常）
+        if (evaluation == null) {
+            log.info("项目无评估记录, projectId: {}", projectId);
+            StatisticsResultVO empty = new StatisticsResultVO();
+            empty.setProjectId(projectId);
+            empty.setTotalWorkload(BigDecimal.ZERO);
+            empty.setEstimatedMonths(BigDecimal.ZERO);
+            empty.setWorkloadTypeDistribution(List.of());
+            empty.setModuleWorkloads(List.of());
+            empty.setRiskWarnings(List.of());
+            StatisticsResultVO.EvaluationOverview overview = new StatisticsResultVO.EvaluationOverview();
+            overview.setModuleCount(0);
+            overview.setHasCustomDev(false);
+            empty.setEvaluationOverview(overview);
+            return empty;
+        }
+
         // 2. 获取已配置的模块列表
         List<ProjectModuleConfig> configs = getModuleConfigs(projectId);
 
         // 3. 获取模块信息
         List<Module> modules = getModules(configs);
 
-        // 4. 获取数据量和用户数阶梯信息
-        DataVolumeLadder dataVolumeLadder = getDataVolumeLadder(evaluation.getDataVolumeLadderId());
-        UserCountLadder userCountLadder = getUserCountLadder(evaluation.getUserCountLadderId());
+        // 4. 获取数据量和用户数阶梯信息（防空）
+        DataVolumeLadder dataVolumeLadder = evaluation.getDataVolumeLadderId() != null
+                ? getDataVolumeLadder(evaluation.getDataVolumeLadderId()) : null;
+        UserCountLadder userCountLadder = evaluation.getUserCountLadderId() != null
+                ? getUserCountLadder(evaluation.getUserCountLadderId()) : null;
 
         // 5. 构建统计结果
         StatisticsResultVO result = new StatisticsResultVO();
@@ -135,11 +160,7 @@ public class StatisticsServiceImpl implements StatisticsService {
     private Evaluation getEvaluationByProjectId(Long projectId) {
         LambdaQueryWrapper<Evaluation> wrapper = new LambdaQueryWrapper<>();
         wrapper.eq(Evaluation::getProjectId, projectId);
-        Evaluation evaluation = evaluationMapper.selectOne(wrapper);
-        if (evaluation == null) {
-            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "评估记录不存在");
-        }
-        return evaluation;
+        return evaluationMapper.selectOne(wrapper);
     }
 
     /**
@@ -456,6 +477,27 @@ public class StatisticsServiceImpl implements StatisticsService {
                 overview.setUserCountLadder(ladder.getLadderName());
             }
         }
+
+        return overview;
+    }
+
+    @Override
+    public StatisticsResultVO.DashboardOverview getOverview() {
+        StatisticsResultVO.DashboardOverview overview = new StatisticsResultVO.DashboardOverview();
+
+        overview.setProjectCount(projectMapper.selectCount(null));
+        overview.setEvaluationCount(evaluationMapper.selectCount(null));
+        overview.setUserCount(userMapper.selectCount(null));
+
+        // SUM(totalWorkload) 可能为 null（无评估记录时），做防空处理
+        LambdaQueryWrapper<Evaluation> sumWrapper = new LambdaQueryWrapper<>();
+        sumWrapper.select(Evaluation::getTotalWorkload);
+        List<Evaluation> evaluations = evaluationMapper.selectList(sumWrapper);
+        BigDecimal totalWorkload = evaluations.stream()
+                .map(Evaluation::getTotalWorkload)
+                .filter(java.util.Objects::nonNull)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+        overview.setTotalWorkload(totalWorkload);
 
         return overview;
     }

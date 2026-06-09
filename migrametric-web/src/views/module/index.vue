@@ -264,6 +264,14 @@ async function loadData() {
     const res = await queryModulePage(params)
     tableData.value = res.records
     pagination.total = res.total
+
+    // 翻页越界兜底：pageNum > totalPages 时自动跳到最后一页重新查询
+    // 触发场景：删除最后一页唯一记录后 totalPages 减少，pageNum 仍指向已不存在的页
+    const totalPages = Math.max(1, Math.ceil(res.total / pagination.pageSize))
+    if (pagination.pageNum > totalPages && res.total > 0) {
+      pagination.pageNum = totalPages
+      await loadData()
+    }
   } catch {
     ElMessage.error('加载数据失败')
   } finally {

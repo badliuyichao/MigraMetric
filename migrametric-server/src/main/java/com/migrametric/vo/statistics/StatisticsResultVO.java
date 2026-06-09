@@ -261,6 +261,27 @@ public class StatisticsResultVO implements Serializable {
     }
 
     /**
+     * 首页仪表盘概览
+     */
+    @Data
+    public static class DashboardOverview implements Serializable {
+        @Serial
+        private static final long serialVersionUID = 1L;
+
+        @Schema(description = "项目总数")
+        private Long projectCount;
+
+        @Schema(description = "评估次数")
+        private Long evaluationCount;
+
+        @Schema(description = "总工作量（人天）")
+        private BigDecimal totalWorkload;
+
+        @Schema(description = "用户数")
+        private Long userCount;
+    }
+
+    /**
      * 评估指标概览
      */
     @Data

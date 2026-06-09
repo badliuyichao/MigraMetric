@@ -45,10 +45,20 @@ public class ModuleServiceImpl implements ModuleService {
 
     @Override
     public PageResult<ModuleVO> queryPage(ModuleQueryDTO queryDTO) {
+        // 边界处理：pageNum < 1 → 1；pageSize < 1 → 10（默认）；pageSize > 200 → 200（避免大结果集）
+        if (queryDTO.getPageNum() == null || queryDTO.getPageNum() < 1) {
+            queryDTO.setPageNum(1);
+        }
+        if (queryDTO.getPageSize() == null || queryDTO.getPageSize() < 1) {
+            queryDTO.setPageSize(10);
+        } else if (queryDTO.getPageSize() > 200) {
+            queryDTO.setPageSize(200);
+        }
+
         // 构建分页条件
         Page<Module> page = new Page<>(
-                queryDTO.getPageNum() != null ? queryDTO.getPageNum() : 1,
-                queryDTO.getPageSize() != null ? queryDTO.getPageSize() : 10
+                queryDTO.getPageNum(),
+                queryDTO.getPageSize()
         );
 
         // 构建查询条件

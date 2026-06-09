@@ -115,6 +115,7 @@
 import { ref, reactive, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useUserStore } from '@/stores/user'
+import { getDashboardOverview } from '@/api/statistics/statistics'
 
 const router = useRouter()
 const userStore = useUserStore()
@@ -160,8 +161,16 @@ function getStatusText(status: string) {
 }
 
 // 初始化数据
-onMounted(() => {
-  // TODO: 从API获取数据
+onMounted(async () => {
+  try {
+    const data = await getDashboardOverview()
+    stats.projectCount = data.projectCount
+    stats.evaluationCount = data.evaluationCount
+    stats.totalWorkload = data.totalWorkload
+    stats.userCount = data.userCount
+  } catch {
+    // 静默处理，保持默认 0
+  }
 })
 </script>
 

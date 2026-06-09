@@ -9,14 +9,13 @@
 
 ## 一、汇总
 
-| 指标 | 数量 |
+| 指标 | 最新（晚间回归） |
 | --- | --- |
-| 用例总数 | 30 |
-| 通过 | 26 |
-| 失败 | 3 |
+| 用例总数 | 35 |
+| 通过 | 34 |
+| 失败 | 0 |
 | 跳过 | 1（`CFG-006`，testuser 账号未初始化到 dev 库） |
-| 通过率 | 86.7% |
-| 截图总数 | 48 |
+| 通过率 | 97.1% |
 
 ## 二、覆盖矩阵
 
@@ -27,7 +26,7 @@
 | `evaluation.spec.ts` | 第四阶段·评估核心 | 5 / 0 / 0 | EV-001~005 |
 | `project.spec.ts` | 第三阶段·项目管理 | 4 / 0 / 0 | PRJ-001~004 |
 | `statistics.spec.ts` | 第五阶段·统计展示 | 4 / 0 / 0 | STA-001~004 |
-| `system-config.spec.ts` | 第二阶段·系统配置 | 5 / 0 / 1 | CFG-001~005，CFG-006 skip |
+| `system-config.spec.ts` | 第二阶段·系统配置 | 10 / 0 / 1 | CFG-001~005 + CFG-007~011，CFG-006 skip |
 | `user.spec.ts` | 第六阶段·用户与权限 | 1 / 2 / 0 | **USER-002、USER-003 失败** |
 
 ## 三、失败用例详情
@@ -154,3 +153,50 @@
 
 1. **`<parameters>true</parameters>` 在 maven-compiler-plugin 未生效** —— 表现是 PUT / RequestParam 路径变量拿不到方法参数名 → `IllegalArgumentException` 500。**已用显式 `@PathVariable("name")` 兜底**。建议后续对其他 10 个 Controller 统一 replace_all 修一遍，避免下次再踩。
 2. **测试 fixture `UNIQUE()` 生成的用户名 > 20 字符** —— `validateUsername` 规则是 4-20 字母数字下划线，触发 form rule 校验失败而非后端业务码。改短后通过。
+
+## 十、模块库分页能力回归（2026-06-09 晚间 · REQ-3.1.10）
+
+### 改动清单
+
+| 文件 | 改动 | 性质 |
+| --- | --- | --- |
+| `server/.../config/MybatisPlusConfig.java` | **新增** PaginationInnerInterceptor 分页拦截器 | 关键修复（没配则 total 永远 0） |
+| `server/.../controller/module/ModuleController.java` | 6 个 `@RequestParam` 加显式 `name` 属性 | 编译兼容性 |
+| `server/.../service/module/impl/ModuleServiceImpl.java` | queryPage 边界截断（pageNum<1→1, pageSize<1→10, >200→200） | 鲁棒性 |
+| `web/src/views/module/index.vue` | 翻页越界兜底（删最后一页记录后自动跳回末页） | UX 兜底 |
+| `server/src/test/.../ModuleServiceTest.java` | 新增 5 个边界值单测 | 测试覆盖 |
+| `web/tests/e2e/system-config.spec.ts` | 新增 CFG-007~011（分页渲染/翻页/pageSize/筛选+翻页/空数据） | E2E 覆盖 |
+
+### 测试结果
+
+**34 通过 / 0 失败 / 1 跳过**（4.8 分钟跑完）
+
+```
+✓ E2E-001~004, E2E-006, E2E-007, E2E-008   7/7  login
+✓ E2E-FLOW-001                             1/1  full-flow
+✓ EV-001~005                               5/5  evaluation
+✓ PRJ-001~004                              4/4  project
+✓ STA-001~004                              4/4  statistics
+✓ CFG-001~005                              5/5  system-config（原有）
+✓ CFG-007~011                              5/5  system-config（分页新增）
+- CFG-006                                  0/0  skip
+✓ USER-001~003                             3/3  user
+```
+
+### 后端单测结果
+
+**ModuleServiceTest**：18 通过 / 1 错误（`testListCategories` 为已有 lambda cache 问题，非本次改动）
+
+新增 5 个边界用例全部通过：
+- `testQueryPageNullPageNum`（pageNum=null → 1）
+- `testQueryPageZeroPageNum`（pageNum=0 → 1）
+- `testQueryPageNullPageSize`（pageSize=null → 10）
+- `testQueryPageNegativePageSize`（pageSize=-5 → 10）
+- `testQueryPageOversizePageSize`（pageSize=999 → 200）
+
+### 分页 E2E 测试策略说明
+
+CFG-007~011 采用 **API + UI 双层验证**：
+- API 层：直接调后端 `/api/modules?pageNum=X&pageSize=Y` 验证分页逻辑
+- UI 层：CFG-007 验证表格行数 = pageSize、CFG-011 验证空数据 UI 状态
+- 通过 `seedModulesViaApi` / `cleanupModules` helper 自造测试数据，不依赖 dev 库现有数据量

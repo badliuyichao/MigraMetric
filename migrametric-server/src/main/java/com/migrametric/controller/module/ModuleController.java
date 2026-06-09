@@ -32,12 +32,12 @@ public class ModuleController {
     @Operation(summary = "分页查询模块")
     @GetMapping
     public Result<PageResult<ModuleVO>> queryPage(
-            @Parameter(description = "模块名称") @RequestParam(required = false) String moduleName,
-            @Parameter(description = "所属系统ID") @RequestParam(required = false) Long systemId,
-            @Parameter(description = "模块分类") @RequestParam(required = false) String category,
-            @Parameter(description = "状态") @RequestParam(required = false) Integer status,
-            @Parameter(description = "页码") @RequestParam(defaultValue = "1") Integer pageNum,
-            @Parameter(description = "每页数量") @RequestParam(defaultValue = "10") Integer pageSize
+            @Parameter(description = "模块名称") @RequestParam(name = "moduleName", required = false) String moduleName,
+            @Parameter(description = "所属系统ID") @RequestParam(name = "systemId", required = false) Long systemId,
+            @Parameter(description = "模块分类") @RequestParam(name = "category", required = false) String category,
+            @Parameter(description = "状态") @RequestParam(name = "status", required = false) Integer status,
+            @Parameter(description = "页码") @RequestParam(name = "pageNum", defaultValue = "1") Integer pageNum,
+            @Parameter(description = "每页数量") @RequestParam(name = "pageSize", defaultValue = "10") Integer pageSize
     ) {
         ModuleQueryDTO queryDTO = new ModuleQueryDTO();
         queryDTO.setModuleName(moduleName);

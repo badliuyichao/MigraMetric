@@ -80,7 +80,24 @@ export interface StatisticsResultVO {
   evaluationOverview: EvaluationOverview
 }
 
+/**
+ * 首页仪表盘概览
+ */
+export interface DashboardOverview {
+  projectCount: number
+  evaluationCount: number
+  totalWorkload: number
+  userCount: number
+}
+
 // ========== 统计相关API ==========
+
+/**
+ * 获取首页仪表盘概览
+ */
+export function getDashboardOverview() {
+  return request.get<DashboardOverview>('/statistics/overview')
+}
 
 /**
  * 获取项目统计结果

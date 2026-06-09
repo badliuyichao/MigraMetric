@@ -594,12 +594,91 @@ Authorization: Bearer <token>
 
 ### 7.1 分页查询模块
 
+**功能**：分页查询模块列表（REQ-3.1.10），支持按名称模糊、按系统/分类/状态筛选，固定 `ORDER BY create_time DESC` 排序。
+
 **请求**
 
 ```http
-GET /modules?pageNum=1&pageSize=10&moduleName=财务
+GET /modules?pageNum=1&pageSize=10&moduleName=财务&systemId=1&category=HR&status=1
 Authorization: Bearer <token>
 ```
+
+**Query 参数**：
+
+| 字段 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| pageNum | int | 否 | 1 | 页码，< 1 截断为 1，> totalPages 时前端自动跳到最后一页 |
+| pageSize | int | 否 | 10 | 每页条数，< 1 截断为 10，> 200 截断为 200 |
+| moduleName | string | 否 | - | 模块名称模糊匹配（`LIKE '%xxx%'`） |
+| systemId | long | 否 | - | 所属系统 ID，精确匹配 |
+| category | string | 否 | - | 模块分类，精确匹配 |
+| status | int | 否 | - | 状态：0=禁用，1=启用 |
+
+**响应（成功）**
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "records": [
+      {
+        "id": 1,
+        "moduleName": "财务会计",
+        "systemId": 1,
+        "systemName": "SAP",
+        "category": "财务模块",
+        "baseWorkload": 15.00,
+        "defaultWeight": 1.00,
+        "description": "财务核算",
+        "status": 1,
+        "createTime": "2026-03-19T20:30:14",
+        "updateTime": "2026-04-03T11:57:50"
+      }
+    ],
+    "total": 25,
+    "pageNum": 1,
+    "pageSize": 10,
+    "totalPages": 3,
+    "hasPrevious": false,
+    "hasNext": true,
+    "fromIndex": 1,
+    "toIndex": 10
+  },
+  "timestamp": "2026-06-09T10:00:00"
+}
+```
+
+**响应字段**：
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| records | ModuleVO[] | 当前页数据 |
+| total | long | 满足筛选条件的总记录数 |
+| pageNum | int | 当前页码 |
+| pageSize | int | 当前每页大小 |
+| totalPages | int | 总页数 = ceil(total/pageSize) |
+| hasPrevious | boolean | 是否有上一页 |
+| hasNext | boolean | 是否有下一页 |
+| fromIndex | int | 当前页首条记录在全集的索引（从 1 开始） |
+| toIndex | int | 当前页末条记录在全集的索引 |
+
+**业务规则**：
+- 所有筛选条件（moduleName / systemId / category / status）AND 组合
+- 不传筛选参数 = 全量（受 status 软删除过滤）
+- `deleted = 1` 的软删除记录**不返回**（MyBatis-Plus `@TableLogic` 自动加条件）
+- 排序固定 `ORDER BY create_time DESC`，不可配置
+
+**错误响应**：
+
+| HTTP | code | message | 触发条件 |
+|------|------|---------|----------|
+| 200 | 50005 | 参数无效 | pageNum / pageSize 非整数（如传 "abc"） |
+| 200 | 10001 | 鉴权失败 | JWT 无效或过期（由 GlobalExceptionHandler 统一处理） |
+
+**性能预期**：单次 queryPage < 100ms（千级数据）。
+
+**E2E 覆盖**：见 `docs/develop/测试方案及测试计划（合集）.md` §12.4。
 
 ### 7.2 获取启用的模块
 

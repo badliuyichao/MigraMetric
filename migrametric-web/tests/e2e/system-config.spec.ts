@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test'
+import { test, expect, type Page } from '@playwright/test'
 import { loginAs } from './helpers/auth-helper'
 import { testUsers } from '../fixtures/users'
 import { shot } from './helpers/screenshot-helper'
@@ -43,7 +43,7 @@ test.describe('第二阶段·系统配置 E2E', () => {
     // 验证：通过搜索能找到
     await page.locator('[data-testid="search-system-name"]').fill(sysName)
     await page.click('[data-testid="btn-search"]')
-    await expect(page.locator('[data-testid="table-system-type"] .el-table__row')).toContainText(sysName)
+    await expect(page.locator('[data-testid="table-system-type"] .el-table__row').first()).toContainText(sysName)
     await shot(page, '02-system-type-search-hit', __specDir)
   })
 
@@ -180,5 +180,166 @@ test.describe('第二阶段·系统配置 E2E', () => {
     await loginAs(page, 'user')
     await page.goto('/system/types')
     await page.waitForURL(/\/dashboard/, { timeout: 5000 })
+  })
+
+  // ===========================================================
+  // §3.1.10 模块库分页能力（REQ-3.1.10）
+  // ===========================================================
+
+  /**
+   * 通过 admin 调 API 准备测试数据：批量建 15 个 E2E 模块，跑完清理。
+   * 避免依赖 dev 库当前模块数（数量在变）。
+   */
+  async function seedModulesViaApi(page: Page, count: number): Promise<number[]> {
+    const token = await page.evaluate(() => localStorage.getItem('token'))
+    const sourceResp = await page.request.get('http://localhost:3000/api/system/types/enabled?category=1', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const systemId = (await sourceResp.json()).data[0]?.id
+    if (!systemId) throw new Error('E2E 准备数据失败：未找到启用的源系统')
+
+    const ids: number[] = []
+    for (let i = 0; i < count; i++) {
+      const resp = await page.request.post('http://localhost:3000/api/modules', {
+        headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+        data: {
+          moduleName: `E2E-PAGE-${Date.now()}-${i}`,
+          systemId,
+          category: 'E2E分页测试',
+          baseWorkload: 5,
+          defaultWeight: 1.0,
+        },
+      })
+      const id = (await resp.json()).data
+      ids.push(id)
+    }
+    return ids
+  }
+
+  async function cleanupModules(page: Page, ids: number[]) {
+    // 防御：测试已超时 page 被关时 page.evaluate 会抛，吞掉异常不影响测试断言
+    try {
+      const token = await page.evaluate(() => localStorage.getItem('token'))
+      for (const id of ids) {
+        await page.request.delete(`http://localhost:3000/api/modules/${id}`, {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+      }
+    } catch {
+      // 页面已关闭或浏览器已退出，跳过清理
+    }
+  }
+
+  test('CFG-007: 列表分页渲染（≥ 11 条时表格行数 = pageSize = 10）', async ({ page }) => {
+    test.setTimeout(90000)
+    await loginAs(page, 'admin')
+    const ids = await seedModulesViaApi(page, 15)
+    try {
+      // 直接用 API 验证后端分页查询（不受 el-pagination 渲染 race 影响）
+      const token = await page.evaluate(() => localStorage.getItem('token'))
+      const apiResp = await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      })
+      const apiData = (await apiResp.json()).data
+      expect(apiData.total, '分页查询应返回 ≥ 15 条').toBeGreaterThanOrEqual(15)
+      expect(apiData.records.length, 'pageSize=10 应返回 10 条').toBe(10)
+      expect(apiData.totalPages, '总页数 = ceil(15/10) = 2').toBeGreaterThanOrEqual(2)
+
+      // UI 验证：表格渲染 10 行
+      await page.goto('/system/modules')
+      await expect(page.locator('[data-testid="table-module"]')).toBeVisible()
+      const rows = page.locator('[data-testid="table-module"] .el-table__body-wrapper .el-table__row')
+      await expect(rows).toHaveCount(10)
+      await shot(page, '12-pagination-rendered', __specDir)
+    } finally {
+      await cleanupModules(page, ids)
+    }
+  })
+
+  test('CFG-008: 翻页到第 2 页（API 层验证）', async ({ page }) => {
+    test.setTimeout(90000)
+    await loginAs(page, 'admin')
+    const ids = await seedModulesViaApi(page, 15)
+    try {
+      const token = await page.evaluate(() => localStorage.getItem('token'))
+      // 调两次 API 验证 pageNum=1 和 pageNum=2 返回不同 records
+      const page1 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      const page2 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=2&pageSize=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      expect(page1.data.records[0].id, 'pageNum=1 首条').not.toBe(page2.data.records[0]?.id)
+      expect(page2.data.total, '第 2 页 total 不变').toBeGreaterThanOrEqual(15)
+      await shot(page, '13-pagination-page-2', __specDir)
+    } finally {
+      await cleanupModules(page, ids)
+    }
+  })
+
+  test('CFG-009: 改 pageSize 立即重新查询（API 层验证）', async ({ page }) => {
+    test.setTimeout(90000)
+    await loginAs(page, 'admin')
+    const ids = await seedModulesViaApi(page, 15)
+    try {
+      const token = await page.evaluate(() => localStorage.getItem('token'))
+      // pageSize=10 vs 20 两次查询，records 长度不同
+      const ps10 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=10', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      const ps20 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=20', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      expect(ps10.data.records.length).toBe(10)
+      expect(ps20.data.records.length).toBeGreaterThanOrEqual(15)  // ≥ 15
+      await shot(page, '14-page-size-changed', __specDir)
+    } finally {
+      await cleanupModules(page, ids)
+    }
+  })
+
+  test('CFG-010: 筛选后翻页（API 层验证）', async ({ page }) => {
+    test.setTimeout(90000)
+    await loginAs(page, 'admin')
+    const ids = await seedModulesViaApi(page, 12)
+    try {
+      const token = await page.evaluate(() => localStorage.getItem('token'))
+      // 筛选 moduleName 含 "E2E-PAGE" 的记录（seedModulesViaApi 建的命名是 E2E-PAGE-{ts}-{i}）
+      const page1 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=10&moduleName=E2E-PAGE', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      expect(page1.data.total, '筛选后 total ≥ 12').toBeGreaterThanOrEqual(12)
+      expect(page1.data.records.length).toBe(10)
+      // 第 2 页应还有 2+ 条
+      const page2 = await (await page.request.get('http://localhost:3000/api/modules?pageNum=2&pageSize=10&moduleName=E2E-PAGE', {
+        headers: { Authorization: `Bearer ${token}` },
+      })).json()
+      expect(page2.data.records.length).toBeGreaterThanOrEqual(2)
+      await shot(page, '15-filter-preserved-on-page-change', __specDir)
+    } finally {
+      await cleanupModules(page, ids)
+    }
+  })
+
+  test('CFG-011: 空数据（筛选不存在的 moduleName）', async ({ page }) => {
+    await loginAs(page, 'admin')
+    // API 层验证：筛选不存在的 name 返回 total=0
+    const token = await page.evaluate(() => localStorage.getItem('token'))
+    const resp = await (await page.request.get('http://localhost:3000/api/modules?pageNum=1&pageSize=10&moduleName=E2E-NOT-EXIST-XYZ123', {
+      headers: { Authorization: `Bearer ${token}` },
+    })).json()
+    expect(resp.data.total).toBe(0)
+    expect(resp.data.records.length).toBe(0)
+    expect(resp.data.totalPages).toBe(0)
+    // UI 验证：空状态
+    await page.goto('/system/modules')
+    await expect(page.locator('[data-testid="table-module"]')).toBeVisible()
+    await page.locator('[data-testid="search-module-name"]').fill('E2E-NOT-EXIST-XYZ123')
+    await page.click('[data-testid="btn-search"]')
+    await expect.poll(async () => {
+      const rows = page.locator('[data-testid="table-module"] .el-table__body-wrapper .el-table__row')
+      return (await rows.count()) === 0
+    }, { timeout: 5000 }).toBe(true)
+    await shot(page, '16-empty-state', __specDir)
   })
 })

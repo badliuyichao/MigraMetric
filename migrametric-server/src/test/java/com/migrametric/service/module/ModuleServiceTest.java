@@ -100,6 +100,102 @@ class ModuleServiceTest {
     }
 
     @Test
+    @DisplayName("分页查询 - pageNum=null 归一为 1")
+    void testQueryPageNullPageNum() {
+        ModuleQueryDTO dto = new ModuleQueryDTO();
+        dto.setPageNum(null);
+        dto.setPageSize(10);
+
+        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Module> mockPage =
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10, 0);
+        mockPage.setRecords(List.of());
+        when(moduleMapper.selectPage(any(Page.class), any())).thenAnswer(inv -> {
+            Page<?> p = inv.getArgument(0);
+            assertEquals(1L, p.getCurrent());
+            assertEquals(10L, p.getSize());
+            return mockPage;
+        });
+
+        moduleService.queryPage(dto);
+    }
+
+    @Test
+    @DisplayName("分页查询 - pageNum=0 归一为 1")
+    void testQueryPageZeroPageNum() {
+        ModuleQueryDTO dto = new ModuleQueryDTO();
+        dto.setPageNum(0);
+        dto.setPageSize(10);
+
+        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Module> mockPage =
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10, 0);
+        mockPage.setRecords(List.of());
+        when(moduleMapper.selectPage(any(Page.class), any())).thenAnswer(inv -> {
+            Page<?> p = inv.getArgument(0);
+            assertEquals(1L, p.getCurrent());
+            return mockPage;
+        });
+
+        moduleService.queryPage(dto);
+    }
+
+    @Test
+    @DisplayName("分页查询 - pageSize=null 归一为 10")
+    void testQueryPageNullPageSize() {
+        ModuleQueryDTO dto = new ModuleQueryDTO();
+        dto.setPageNum(1);
+        dto.setPageSize(null);
+
+        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Module> mockPage =
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10, 0);
+        mockPage.setRecords(List.of());
+        when(moduleMapper.selectPage(any(Page.class), any())).thenAnswer(inv -> {
+            Page<?> p = inv.getArgument(0);
+            assertEquals(10L, p.getSize());
+            return mockPage;
+        });
+
+        moduleService.queryPage(dto);
+    }
+
+    @Test
+    @DisplayName("分页查询 - pageSize<1 归一为 10")
+    void testQueryPageNegativePageSize() {
+        ModuleQueryDTO dto = new ModuleQueryDTO();
+        dto.setPageNum(1);
+        dto.setPageSize(-5);
+
+        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Module> mockPage =
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 10, 0);
+        mockPage.setRecords(List.of());
+        when(moduleMapper.selectPage(any(Page.class), any())).thenAnswer(inv -> {
+            Page<?> p = inv.getArgument(0);
+            assertEquals(10L, p.getSize());
+            return mockPage;
+        });
+
+        moduleService.queryPage(dto);
+    }
+
+    @Test
+    @DisplayName("分页查询 - pageSize>200 截断为 200")
+    void testQueryPageOversizePageSize() {
+        ModuleQueryDTO dto = new ModuleQueryDTO();
+        dto.setPageNum(1);
+        dto.setPageSize(999);
+
+        com.baomidou.mybatisplus.extension.plugins.pagination.Page<Module> mockPage =
+                new com.baomidou.mybatisplus.extension.plugins.pagination.Page<>(1, 200, 0);
+        mockPage.setRecords(List.of());
+        when(moduleMapper.selectPage(any(Page.class), any())).thenAnswer(inv -> {
+            Page<?> p = inv.getArgument(0);
+            assertEquals(200L, p.getSize());
+            return mockPage;
+        });
+
+        moduleService.queryPage(dto);
+    }
+
+    @Test
     @DisplayName("根据ID查询模块 - 存在时返回VO")
     void testGetByIdExists() {
         // Given
