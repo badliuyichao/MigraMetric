@@ -17,7 +17,7 @@
           <el-input v-model="searchForm.moduleName" data-testid="search-module-name" placeholder="请输入模块名称" clearable />
         </el-form-item>
         <el-form-item label="所属系统">
-          <el-select v-model="searchForm.systemId" data-testid="search-system-id" placeholder="请选择" clearable filterable>
+          <el-select v-model="searchForm.systemId" data-testid="search-system-id" placeholder="请选择" clearable filterable style="width: 160px">
             <el-option
               v-for="system in systemList"
               :key="system.id"
@@ -27,7 +27,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="模块分类">
-          <el-select v-model="searchForm.category" data-testid="search-category" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.category" data-testid="search-category" placeholder="请选择" clearable style="width: 140px">
             <el-option
               v-for="cat in categoryList"
               :key="cat"
@@ -37,7 +37,7 @@
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable style="width: 110px">
             <el-option label="启用" :value="1" />
             <el-option label="禁用" :value="0" />
           </el-select>
@@ -52,7 +52,7 @@
       <el-table v-loading="loading" :data="tableData" data-testid="table-module" stripe border style="width: 100%">
         <el-table-column type="index" label="序号" width="60" />
         <el-table-column prop="moduleName" label="模块名称" min-width="120" />
-        <el-table-column prop="systemName" label="所属系统" width="120">
+        <el-table-column prop="systemName" label="所属系统" width="160">
           <template #default="{ row }">
             <el-tag :type="row.systemCategory === 1 ? 'success' : 'warning'">
               {{ row.systemName }}

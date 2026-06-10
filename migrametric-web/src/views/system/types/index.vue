@@ -17,13 +17,13 @@
           <el-input v-model="searchForm.systemName" data-testid="search-system-name" placeholder="请输入系统名称" clearable />
         </el-form-item>
         <el-form-item label="系统类型">
-          <el-select v-model="searchForm.systemCategory" data-testid="search-system-category" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.systemCategory" data-testid="search-system-category" placeholder="请选择" clearable style="width: 140px">
             <el-option label="源系统" :value="1" />
             <el-option label="目标系统" :value="2" />
           </el-select>
         </el-form-item>
         <el-form-item label="状态">
-          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable style="width: 110px">
             <el-option label="启用" :value="1" />
             <el-option label="禁用" :value="0" />
           </el-select>
@@ -54,7 +54,7 @@
           </template>
         </el-table-column>
         <el-table-column prop="description" label="描述" show-overflow-tooltip />
-        <el-table-column prop="statusText" label="状态" width="80">
+        <el-table-column prop="statusText" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="row.status === 1 ? 'success' : 'danger'">
               {{ row.statusText }}

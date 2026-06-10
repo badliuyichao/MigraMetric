@@ -110,7 +110,7 @@ public class ModuleController {
     @Operation(summary = "获取所有启用的模块")
     @GetMapping("/enabled")
     public Result<List<ModuleVO>> listEnabled(
-            @Parameter(description = "所属系统ID") @RequestParam(required = false) Long systemId
+            @Parameter(description = "所属系统ID") @RequestParam(name = "systemId", required = false) Long systemId
     ) {
         List<ModuleVO> list = moduleService.listEnabled(systemId);
         return Result.success(list);
@@ -119,7 +119,7 @@ public class ModuleController {
     @Operation(summary = "获取所有模块分类")
     @GetMapping("/categories")
     public Result<List<String>> listCategories(
-            @Parameter(description = "所属系统ID") @RequestParam(required = false) Long systemId
+            @Parameter(description = "所属系统ID") @RequestParam(name = "systemId", required = false) Long systemId
     ) {
         List<String> categories = moduleService.listCategories(systemId);
         return Result.success(categories);

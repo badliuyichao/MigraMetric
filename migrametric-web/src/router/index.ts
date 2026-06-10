@@ -55,6 +55,15 @@ const routes: RouteRecordRaw[] = [
               title: '模块库管理',
               roles: ['ADMIN']
             }
+          },
+          {
+            path: 'users',
+            name: 'UserManagement',
+            component: () => import('@/views/user/index.vue'),
+            meta: {
+              title: '用户管理',
+              roles: ['ADMIN']
+            }
           }
         ]
       },
@@ -174,6 +183,16 @@ const routes: RouteRecordRaw[] = [
             }
           }
         ]
+      },
+      {
+        path: 'statistics/global',
+        name: 'GlobalStatistics',
+        component: () => import('@/views/statistics/global/index.vue'),
+        meta: {
+          title: '全局统计',
+          icon: 'DataAnalysis',
+          roles: ['ADMIN']
+        }
       }
     ]
   },

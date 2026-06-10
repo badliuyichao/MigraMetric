@@ -792,12 +792,14 @@ Content-Type: application/json
 
 ## 十、统计分析接口
 
-### 10.1 获取项目统计信息
+> 权限要求：仪表盘接口（10.1）对所有登录用户开放；项目级统计（10.2）需要项目访问权限；全局聚合（10.3、10.4）需 `ADMIN` 角色。
+
+### 10.1 获取首页仪表盘概览
 
 **请求**
 
 ```http
-GET /api/statistics/project/1
+GET /api/statistics/overview
 Authorization: Bearer <token>
 ```
 
@@ -808,23 +810,245 @@ Authorization: Bearer <token>
   "code": 200,
   "message": "success",
   "data": {
-    "projectId": 1,
-    "projectName": "XX集团ERP迁移项目",
-    "totalWorkload": 231.38,
-    "moduleCount": 5,
-    "evaluationDate": "2026-03-25"
+    "projectCount": 12,
+    "evaluationCount": 15,
+    "totalWorkload": 1830.50,
+    "userCount": 3
   }
 }
 ```
 
-### 10.2 工作量类型分布
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| projectCount | Long | 项目总数（含草稿/进行中/已完成/已归档） |
+| evaluationCount | Long | 评估记录总数 |
+| totalWorkload | BigDecimal | 全部已评估项目工作量之和（人天） |
+| userCount | Long | 系统注册用户数 |
+
+**业务规则**：
+- 数据统计包含软删除（`deleted=0`）的全部记录
+- `totalWorkload` 为 null 时返回 0，不抛异常
+- 前端进入首页时调用，结果缓存 60 秒
+
+### 10.2 获取项目统计结果
 
 **请求**
 
 ```http
-GET /api/statistics/project/1/workload-type
+GET /api/statistics/{projectId}
 Authorization: Bearer <token>
 ```
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|------|------|------|------|------|
+| projectId | Path | Long | 是 | 项目ID |
+
+**响应**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "projectId": 1,
+    "totalWorkload": 231.38,
+    "estimatedMonths": 10.52,
+    "workloadTypeDistribution": [
+      { "type": "核心迁移", "workload": 156.38, "percentage": 67.60 },
+      { "type": "报表迁移", "workload": 50.00, "percentage": 21.61 },
+      { "type": "客开定制", "workload": 25.00, "percentage": 10.79 }
+    ],
+    "moduleWorkloads": [
+      {
+        "moduleName": "财务管理",
+        "category": "财务",
+        "baseWorkload": 15.00,
+        "weight": 1.30,
+        "workload": 43.88,
+        "percentage": 28.06
+      }
+    ],
+    "multiDimensionIndicators": {
+      "dataVolumeValue": 65.00,
+      "dataVolumeActual": "650万条",
+      "dataVolumeLadder": "大型",
+      "userCountValue": 60.00,
+      "userCountActual": "600人",
+      "userCountLadder": "中大型",
+      "moduleCountValue": 25.00,
+      "moduleCountActual": 5,
+      "reportCountValue": 30.00,
+      "reportCountActual": 30,
+      "customDevValue": 80.00,
+      "hasCustomDev": true,
+      "customDevWorkload": 25.00
+    },
+    "riskWarnings": [
+      {
+        "type": "MODULE_COMPLEXITY",
+        "level": "高",
+        "description": "模块【财务管理】复杂度较高（系数：1.3）",
+        "suggestion": "建议增加该模块的测试时间和数据验证工作量"
+      }
+    ],
+    "evaluationOverview": {
+      "moduleCount": 5,
+      "dataVolume": 650.00,
+      "dataVolumeLadder": "大型",
+      "userCount": 600,
+      "userCountLadder": "中大型",
+      "reportCount": 30,
+      "hasCustomDev": true
+    }
+  }
+}
+```
+
+**业务规则**：
+- 项目无评估记录时返回 200 + 零值 VO，不抛 404（前端据此渲染"待评估"占位）
+- `estimatedMonths = totalWorkload / 22`（22 人天/人月）
+- 维度值采用 0-100 归一化（参考 MAX_DATA_VOLUME=10000 万条、MAX_USER_COUNT=1000 人、MAX_MODULE_COUNT=20、MAX_REPORT_COUNT=100）
+
+**错误码**：
+| code | 含义 |
+|------|------|
+| 200 | 成功（含空数据） |
+| 10003 | 项目不存在（仅当项目ID格式错误时，业务逻辑不返回 404） |
+
+### 10.3 全局聚合统计
+
+**请求**
+
+```http
+GET /api/statistics/global/aggregations?dimension=module&dateFrom=2026-01-01&dateTo=2026-12-31&sourceSystemId=1&status=COMPLETED
+Authorization: Bearer <token>
+```
+
+| 参数 | 位置 | 类型 | 必填 | 取值范围 | 说明 |
+|------|------|------|------|---------|------|
+| dimension | Query | String | 是 | `module` \| `type` \| `complexity` | 聚合维度 |
+| dateFrom | Query | Date | 否 | yyyy-MM-dd | 评估日期起点 |
+| dateTo | Query | Date | 否 | yyyy-MM-dd | 评估日期终点 |
+| sourceSystemId | Query | Long | 否 | - | 源系统ID过滤 |
+| targetSystemId | Query | Long | 否 | - | 目标系统ID过滤 |
+| status | Query | String | 否 | `DRAFT`/`IN_PROGRESS`/`COMPLETED`/`ARCHIVED` | 项目状态过滤 |
+
+**dimension=module 响应**：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "dimension": "module",
+    "total": 8,
+    "items": [
+      { "name": "财务管理", "value": 320.50, "percentage": 25.30, "projectCount": 5 },
+      { "name": "供应链管理", "value": 280.00, "percentage": 22.10, "projectCount": 4 }
+    ]
+  }
+}
+```
+
+**dimension=type 响应**：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "dimension": "type",
+    "total": 1267.00,
+    "items": [
+      { "name": "核心迁移", "value": 856.50, "percentage": 67.60, "projectCount": 10 },
+      { "name": "报表迁移", "value": 285.00, "percentage": 22.50, "projectCount": 8 },
+      { "name": "客开定制", "value": 125.50, "percentage": 9.90, "projectCount": 3 }
+    ]
+  }
+}
+```
+
+**dimension=complexity 响应**：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "dimension": "complexity",
+    "dataVolumeDistribution": [
+      { "ladderName": "小型", "projectCount": 3, "totalWorkload": 250.00 },
+      { "ladderName": "大型", "projectCount": 5, "totalWorkload": 800.00 }
+    ],
+    "userCountDistribution": [
+      { "ladderName": "小型", "projectCount": 2, "totalWorkload": 180.00 },
+      { "ladderName": "中大型", "projectCount": 4, "totalWorkload": 520.00 }
+    ],
+    "highComplexityModules": [
+      { "moduleName": "财务核算", "weight": 1.80, "projectCount": 6 }
+    ]
+  }
+}
+```
+
+**业务规则**：
+- 仅聚合 `status='COMPLETED'` 的项目（默认行为；通过 `status` 查询参数可调整）
+- 空数据时 `items: []`，HTTP 仍返回 200
+- 过滤条件可组合，`dateFrom`/`dateTo` 基于 `evaluation.create_time`
+
+**错误码**：
+| code | 含义 |
+|------|------|
+| 200 | 成功 |
+| 400 | dimension 非法值 |
+| 11001 | 权限不足（非 ADMIN） |
+
+### 10.4 全局排行榜
+
+**请求**
+
+```http
+GET /api/statistics/global/ranking?metric=workload&limit=10
+Authorization: Bearer <token>
+```
+
+| 参数 | 位置 | 类型 | 必填 | 取值范围 | 说明 |
+|------|------|------|------|---------|------|
+| metric | Query | String | 是 | `workload` \| `userCount` \| `dataVolume` | 排序指标 |
+| limit | Query | Integer | 否 | 1-50，默认 10 | 返回条数 |
+
+**响应**：
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "metric": "workload",
+    "items": [
+      {
+        "projectId": 12,
+        "projectName": "XX集团ERP迁移",
+        "customerName": "XX集团",
+        "value": 320.50,
+        "unit": "人天"
+      }
+    ]
+  }
+}
+```
+
+**业务规则**：
+- 仅返回已评估（存在 evaluation 记录）且 `status='COMPLETED'` 的项目
+- `value` 单位：`workload`→人天 / `userCount`→人 / `dataVolume`→万条
+- 同值按 `project_id` 升序
+
+**错误码**：
+| code | 含义 |
+|------|------|
+| 200 | 成功 |
+| 400 | metric/limit 非法值 |
+| 11001 | 权限不足（非 ADMIN） |
 
 ---
 
@@ -846,7 +1070,202 @@ Authorization: Bearer <token>
 
 ---
 
-## 十二、错误码说明
+## 十二、用户管理接口
+
+> 权限要求：以下所有接口均需要管理员权限（`@PreAuthorize("hasRole('ADMIN')")`）。
+
+### 12.1 分页查询用户
+
+**请求**
+
+```http
+GET /api/users/page?current=1&pageSize=10&username=admin&role=ADMIN&status=1
+Authorization: Bearer <token>
+```
+
+**Query 参数**
+
+| 字段 | 类型 | 必填 | 默认 | 说明 |
+|------|------|------|------|------|
+| username | String | 否 | - | 用户名模糊匹配 |
+| name | String | 否 | - | 姓名模糊匹配 |
+| role | String | 否 | - | 角色精确匹配：`ADMIN` / `USER` |
+| status | Integer | 否 | - | 状态精确匹配：0=禁用，1=启用 |
+| current | Integer | 否 | 1 | 页码 |
+| pageSize | Integer | 否 | 10 | 每页条数 |
+
+**响应**
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "records": [
+      {
+        "id": 1,
+        "username": "admin",
+        "name": "系统管理员",
+        "role": "ADMIN",
+        "roleName": "管理员",
+        "status": 1,
+        "statusName": "启用",
+        "createTime": "2026-03-19T20:30:14"
+      }
+    ],
+    "total": 2,
+    "pageNum": 1,
+    "pageSize": 10,
+    "totalPages": 1
+  }
+}
+```
+
+### 12.2 获取用户详情
+
+**请求**
+
+```http
+GET /api/users/1
+Authorization: Bearer <token>
+```
+
+**响应**
+
+```json
+{
+  "code": 200,
+  "message": "操作成功",
+  "data": {
+    "id": 1,
+    "username": "admin",
+    "name": "系统管理员",
+    "email": null,
+    "phone": null,
+    "role": "ADMIN",
+    "roleName": "管理员",
+    "status": 1,
+    "statusName": "启用",
+    "createTime": "2026-03-19T20:30:14",
+    "lastLoginTime": "2026-06-09T16:00:00",
+    "remark": "系统管理员账号"
+  }
+}
+```
+
+### 12.3 创建用户
+
+**请求**
+
+```http
+POST /api/users
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "username": "zhangsan",
+  "password": "123456",
+  "name": "张三",
+  "role": "USER",
+  "remark": "普通用户"
+}
+```
+
+**请求体字段**
+
+| 字段 | 类型 | 必填 | 校验规则 | 说明 |
+|------|------|------|----------|------|
+| username | String | 是 | 3-50 字符 | 登录账号，创建后不可修改 |
+| password | String | 是 | 6-100 字符 | 登录密码 |
+| name | String | 是 | 最大 50 字符 | 用户姓名 |
+| role | String | 是 | `ADMIN` / `USER` | 用户角色 |
+| email | String | 否 | 邮箱格式，最大 100 字符 | 邮箱 |
+| phone | String | 否 | 最大 20 字符 | 手机号 |
+| remark | String | 否 | 最大 500 字符 | 备注 |
+
+**响应**
+
+```json
+{ "code": 200, "message": "操作成功", "data": 5 }
+```
+
+### 12.4 更新用户
+
+**请求**
+
+```http
+PUT /api/users/5
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "name": "张三（修改）",
+  "role": "ADMIN"
+}
+```
+
+> 不可修改 `username` 和 `password`，`id` 由路径参数自动设置。
+
+### 12.5 删除用户
+
+**请求**
+
+```http
+DELETE /api/users/5
+Authorization: Bearer <token>
+```
+
+> 管理员账号不能删除。
+
+### 12.6 重置密码
+
+**请求**
+
+```http
+POST /api/users/password/reset
+Authorization: Bearer <token>
+Content-Type: application/json
+
+{
+  "userId": 5,
+  "newPassword": "123456",
+  "confirmPassword": "123456"
+}
+```
+
+> `newPassword` 与 `confirmPassword` 必须一致，由服务层校验。
+
+### 12.7 启用/禁用用户
+
+**请求**
+
+```http
+PUT /api/users/5/status?status=0
+Authorization: Bearer <token>
+```
+
+> `status`：0=禁用，1=启用。管理员账号不能禁用（至少保留一个启用的管理员）。
+
+### 12.8 检查用户名是否可用
+
+**请求**
+
+```http
+GET /api/users/check/username?username=zhangsan
+Authorization: Bearer <token>
+```
+
+**响应**
+
+```json
+{ "code": 200, "message": "操作成功", "data": false }
+```
+
+> `data` 为 `true` 表示用户名已存在，`false` 表示可用。编辑时可传 `excludeId` 排除自身。
+
+---
+
+## 十三、错误码说明
 
 | 错误码 | 说明 |
 |--------|------|
@@ -859,7 +1278,7 @@ Authorization: Bearer <token>
 
 ---
 
-## 十三、状态码说明
+## 十四、状态码说明
 
 ### 项目状态
 
