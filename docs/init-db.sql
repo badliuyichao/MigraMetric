@@ -708,21 +708,21 @@ INSERT INTO sys_module (module_name, system_id, category, base_workload, default
 -- 8. 数据量阶梯表初始数据
 -- -------------------------------------------
 INSERT INTO sys_data_volume_ladder (ladder_name, min_volume, max_volume, weight, sort_order, create_by) VALUES
-('记录级', 0, 1, 0.60, 1, 'system'),
-('小量级', 1, 10, 0.80, 2, 'system'),
-('中等量级', 10, 100, 1.00, 3, 'system'),
-('大量级', 100, 1000, 1.50, 4, 'system'),
-('超大量级', 1000, NULL, 2.00, 5, 'system');
+('微型', 0, 10, 0.60, 1, 'system'),
+('小型', 10, 50, 0.80, 2, 'system'),
+('中型', 50, 200, 1.00, 3, 'system'),
+('大型', 200, 500, 1.20, 4, 'system'),
+('超大型', 500, NULL, 1.50, 5, 'system');
 
 -- -------------------------------------------
 -- 9. 用户数阶梯表初始数据
 -- -------------------------------------------
 INSERT INTO sys_user_count_ladder (ladder_name, min_count, max_count, weight, sort_order, create_by) VALUES
-('小规模', 0, 50, 0.90, 1, 'system'),
-('中规模', 50, 200, 1.00, 2, 'system'),
-('大规模', 200, 500, 1.30, 3, 'system'),
-('大规模企业', 500, 1000, 1.50, 4, 'system'),
-('超大规模', 1000, NULL, 2.00, 5, 'system');
+('微小型', 0, 50, 1.00, 1, 'system'),
+('小型', 50, 200, 1.20, 2, 'system'),
+('中型', 200, 500, 1.40, 3, 'system'),
+('大型', 500, 1000, 1.60, 4, 'system'),
+('超大型', 1000, NULL, 1.80, 5, 'system');
 
 -- -------------------------------------------
 -- 10. 报表配置表初始数据
