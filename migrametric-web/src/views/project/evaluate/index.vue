@@ -792,8 +792,12 @@ async function handleCalculate() {
   calculationLoading.value = true
 
   try {
-    // 先保存当前数据
-    await saveCurrentStepData()
+    // 先保存当前数据，保存失败则中止计算
+    const saved = await saveCurrentStepData()
+    if (!saved) {
+      calculationLoading.value = false
+      return
+    }
 
     // 调用后端API计算工作量
     const result = await calculateWorkload(projectId.value)
