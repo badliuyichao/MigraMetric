@@ -458,14 +458,15 @@ MigraMetric/
 
 | 序号 | 任务名称 | 任务描述 | 交付物 | 依赖 | 工时 |
 |------|---------|---------|--------|------|------|
-| 5.1 | 统计分析图表 | 饼图、柱状图、雷达图 | 完整功能 | 4.6 | 1.5天 |
-| 5.2 | Excel导出 | POI导出Excel | 完整功能 | 4.6 | 1.5天 |
-| 5.3 | PDF导出 | PDF生成 | 完整功能 | 4.6 | 1.5天 |
-| 5.4 | Word导出 | Word模板导出 | 完整功能 | 4.6 | 1.5天 |
+| 5.1 | 统计分析图表（单项目） | 饼图、柱状图、雷达图 | 完整功能 | 4.6 | 1.5天 |
+| 5.2 | **全局统计仪表盘（新增）** | 跨项目聚合 + Top 排行榜 | 完整功能 | 5.1 | 1.5天 |
+| 5.3 | Excel导出 | POI导出Excel | 完整功能 | 4.6 | 1.5天 |
+| 5.4 | PDF导出 | PDF生成 | 完整功能 | 4.6 | 1.5天 |
+| 5.5 | Word导出 | Word模板导出 | 完整功能 | 4.6 | 1.5天 |
 
 **具体任务详情**：
 
-#### 5.1 统计分析图表
+#### 5.1 统计分析图表（单项目）
 ```
 前端任务：
 - ECharts图表封装
@@ -473,9 +474,61 @@ MigraMetric/
 - 柱状图：模块工作量对比
 - 雷达图：多维度指标
 - 图表交互（悬停提示）
+- 状态：✅ 已完成（v1.0）
 ```
 
-#### 5.2 Excel导出
+#### 5.2 全局统计仪表盘（新增 · 2026-06-10）
+
+**来源**：需求 §3.4.2 — 全公司视角的统计需求。
+
+**任务清单**：
+
+| 序号 | 任务 | 估时 | 状态 |
+|------|------|------|------|
+| 1 | ~~后端：聚合 SQL + 索引迁移脚本（3 个）~~ **索引已存在，DDL 变更取消** | 0h | ✅ 取消 |
+| 2 | SQL 种子脚本到 `init-db.sql`（≥3 个 COMPLETED 项目） | 0.5h | ⬜ |
+| 2 | 后端：`GlobalAggregationVO` / `GlobalRankingVO` / `AggregationItemVO` | 0.5h | ⬜ |
+| 3 | 后端：`StatisticsService.getGlobalAggregations`（module/type/complexity） | 1h | ⬜ |
+| 4 | 后端：`StatisticsService.getGlobalRanking`（workload/userCount/dataVolume） | 0.5h | ⬜ |
+| 5 | 后端：`StatisticsController` 新增 2 个 `@GetMapping` + `@PreAuthorize("hasRole('ADMIN')")` | 0.5h | ⬜ |
+| 6 | 后端：单测（聚合 SQL 边界、权限拦截） | 1h | ⬜ |
+| 7 | 前端：`api/statistics/global.ts` API 模块 | 0.5h | ⬜ |
+| 8 | 前端：`views/statistics/global/index.vue` 页面（筛选+4区+排行榜） | 2h | ⬜ |
+| 9 | 前端：ECharts 组件 `ModuleBarChart` / `LadderBarChart` 抽取 | 0.5h | ⬜ |
+| 10 | 前端：路由注册 + 菜单挂载（ADMIN 守卫） | 0.3h | ⬜ |
+| 11 | E2E 用例 STA-005~012 | 1.5h | ⬜ |
+| 12 | 全量回归 + Bug 修复闭环 | 1h | ⬜ |
+
+**总计**：约 10 小时
+
+**数据库变更**：
+```sql
+-- 经核查 docs/init-db.sql 第 300~304/344 行已存在以下 3 条索引：
+--   proj_project:    idx_create_time, idx_status, idx_source_system
+--   eval_evaluation: idx_create_time
+-- 本次特性无需 DDL 变更
+```
+
+**改动范围**：
+- 后端：~200 行（2 个 VO + 2 个 Service 方法 + 2 个 Controller 端点 + Mapper SQL）
+- 前端：~600 行（1 个新页面 + 2 个新图表组件 + API 模块 + 路由）
+- 数据库：0 行 DDL（索引已存在）
+
+**发布顺序**：
+1. Step 1 SQL 种子脚本（仅 insert，幂等）
+2. Step 2-6 后端开发 + 单测
+3. Step 7-10 前端开发
+4. Step 11 E2E
+5. Step 12 全量回归
+
+**依赖/风险**：
+- 索引已存在，无需迁移验证
+- ECharts 5.x 兼容 Vue 3.4 已有 `views/project/statistics/index.vue` 经验，无新风险
+- 权限守卫需在 `router/index.ts` 复用 `userStore.isAdmin` 判断
+
+---
+
+#### 5.3 Excel导出
 ```
 后端任务：
 - ExcelExportService
@@ -744,6 +797,32 @@ chore(build): 更新构建配置
 4. Step 10 代码开发（仅修改有缺陷部分）
 5. Step 11 单测/集成/E2E
 6. Step 12 验收报告
+
+---
+
+### 8.2 用户管理前端页面（§3.1.6）
+
+**来源**：功能缺失 — 后端 `UserController` 8 个接口齐全，但前端无用户管理页面。
+
+**关联文档**：
+- 需求：§3.1.6（`docs/architecture/需求说明文档.md`）
+- 产品：§3.1.6（`docs/architecture/产品设计文档.md`）
+- API：§十二（`docs/implementation/API接口文档.md`）
+- 测试：§十三（`docs/develop/测试方案及测试计划（合集）.md`）
+
+**任务清单**：
+
+| 序号 | 任务 | 估时 | 状态 |
+|------|------|------|------|
+| 1 | API 文档补充 §十二 用户管理接口 | 0.5h | ✅ 已完成 |
+| 2 | 测试方案修正状态 + 补 E2E 用例 §十三 | 0.5h | ✅ 已完成 |
+| 3 | 前端 `api/user/users.ts` API 模块 | 0.5h | ✅ 已完成 |
+| 4 | 前端 `views/user/index.vue` 用户管理页面 | 2h | ✅ 已完成 |
+| 5 | 路由注册 + 菜单配置 | 0.5h | ✅ 已完成 |
+| 6 | E2E 用例 `user-management.spec.ts`（UM-001~008） | 1.5h | ✅ 8/8 通过 |
+| 7 | 全量 E2E 回归 + Bug 修复闭环 | 1h | ✅ 42/1/1 无回归 |
+
+**总计**：约 6.5 小时
 
 ---
 
