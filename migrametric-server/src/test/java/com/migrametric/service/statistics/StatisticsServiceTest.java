@@ -525,15 +525,18 @@ class StatisticsServiceTest {
     class ErrorTests {
 
         @Test
-        @DisplayName("STAT-ERROR-001: 评估不存在抛出异常")
+        @DisplayName("STAT-ERROR-001: 评估不存在时返空 VO 而非抛异常")
         void shouldThrowExceptionWhenEvaluationNotFound() {
             // Given
             when(evaluationMapper.selectOne(any(LambdaQueryWrapper.class))).thenReturn(null);
 
-            // When & Then
-            assertThatThrownBy(() -> statisticsService.getStatistics(999L))
-                    .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("评估记录不存在");
+            // When
+            StatisticsResultVO result = statisticsService.getStatistics(999L);
+
+            // Then: 不抛异常，返空 VO
+            assertThat(result).isNotNull();
+            assertThat(result.getTotalWorkload()).isEqualByComparingTo("0");
+            assertThat(result.getModuleWorkloads()).isEmpty();
         }
     }
 }

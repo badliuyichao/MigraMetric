@@ -158,7 +158,7 @@ class StatisticsServiceImplGlobalTest {
         when(projectMapper.selectList(any())).thenReturn(List.of(
                 proj(1L, "P1"), proj(2L, "P2"), proj(3L, "P3")
         ));
-        when(evaluationMapper.selectBatchIds(anyList())).thenReturn(List.of(
+        when(evaluationMapper.selectList(any())).thenReturn(List.of(
                 eval(1L, "100.00", "0", "0"),
                 eval(2L, "300.00", "0", "0"),
                 eval(3L, "200.00", "0", "0")
@@ -180,7 +180,7 @@ class StatisticsServiceImplGlobalTest {
         when(projectMapper.selectList(any())).thenReturn(List.of(
                 proj(1L, "P1"), proj(2L, "P2"), proj(3L, "P3")
         ));
-        when(evaluationMapper.selectBatchIds(anyList())).thenReturn(List.of(
+        when(evaluationMapper.selectList(any())).thenReturn(List.of(
                 eval(1L, "10", "0", "0"), eval(2L, "20", "0", "0"), eval(3L, "30", "0", "0")
         ));
 
@@ -195,7 +195,7 @@ class StatisticsServiceImplGlobalTest {
         // 模拟 selectList 调用：传 status=COMPLETED 调用 → IN_PROGRESS 已被 SQL 过滤
         // 这里我们通过 mock 行为验证：当 IN_PROGRESS 不在结果中时，只返 COMPLETED
         when(projectMapper.selectList(any())).thenReturn(List.of(proj(1L, "P1")));
-        when(evaluationMapper.selectBatchIds(anyList())).thenReturn(List.of(eval(1L, "100", "0", "0")));
+        when(evaluationMapper.selectList(any())).thenReturn(List.of(eval(1L, "100", "0", "0")));
 
         StatisticsGlobalVO.GlobalRankingVO result = service.getGlobalRanking("workload", 10);
         assertThat(result.getItems()).hasSize(1);

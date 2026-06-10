@@ -136,8 +136,9 @@ class ProjectServiceTest {
             mockPage.setRecords(List.of(sampleProject));
 
             when(projectMapper.selectPage(any(), any())).thenReturn(mockPage);
-            when(systemTypeMapper.selectById(1L)).thenReturn(createSystemType(1L, "SAP"));
-            when(systemTypeMapper.selectById(2L)).thenReturn(createSystemType(2L, "用友"));
+            when(systemTypeMapper.selectBatchIds(any())).thenReturn(List.of(
+                    createSystemType(1L, "SAP"),
+                    createSystemType(2L, "用友")));
 
             PageResult<ProjectVO> result = projectService.queryPage(queryDTO);
 
@@ -156,8 +157,9 @@ class ProjectServiceTest {
             mockPage.setRecords(List.of(sampleProject));
 
             when(projectMapper.selectPage(any(), any())).thenReturn(mockPage);
-            when(systemTypeMapper.selectById(1L)).thenReturn(createSystemType(1L, "SAP S/4HANA"));
-            when(systemTypeMapper.selectById(2L)).thenReturn(createSystemType(2L, "用友NC"));
+            when(systemTypeMapper.selectBatchIds(any())).thenReturn(List.of(
+                    createSystemType(1L, "SAP S/4HANA"),
+                    createSystemType(2L, "用友NC")));
 
             PageResult<ProjectVO> result = projectService.queryPage(queryDTO);
 
