@@ -238,6 +238,14 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setUpdateTime(LocalDateTime.now());
         evaluationMapper.updateById(evaluation);
 
+        // 同步更新项目状态为已完成（BUG-20260610-02 修复）
+        Project project = projectMapper.selectById(projectId);
+        if (project != null && !"ARCHIVED".equals(project.getStatus())) {
+            project.setStatus("COMPLETED");
+            project.setUpdateTime(LocalDateTime.now());
+            projectMapper.updateById(project);
+        }
+
         log.info("评估完成, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
     }
 

@@ -183,6 +183,12 @@ test.describe('P0 核心流程 E2E', () => {
       await completeResp
       await page.waitForURL(`**/project/detail/${projectId}`, { timeout: 10000 })
       await shot(page, '12-project-detail-after-eval', __specDir)
+
+      // BUG-20260610-02 修复回归断言：project.status 应变为 COMPLETED
+      const projectResp = await callApi(page, 'GET', `/api/projects/${projectId}`)
+      expect(projectResp.status).toBe(200)
+      expect(projectResp.data?.data?.status, '完成评估后 project.status 应为 COMPLETED')
+        .toBe('COMPLETED')
     })
 
     // ============================================================
