@@ -25,6 +25,7 @@ public class Evaluation implements Serializable {
     /**
      * 评估ID
      */
+    @TableId(type = IdType.AUTO)
     @Schema(description = "评估ID")
     private Long id;
 

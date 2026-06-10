@@ -732,6 +732,46 @@ INSERT INTO sys_report_config (config_key, config_value, config_name, descriptio
 ('custom_dev_min_workload', '5.00', '客开最小评估人天', '客开工作量评估的最小值（人天）', 1, 'system'),
 ('workload_precision', '2', '工作量计算精度', '工作量计算结果保留的小数位数', 1, 'system');
 
+-- -------------------------------------------
+-- 11. 全局统计种子项目（REQ-3.4.2）— 3 个 COMPLETED 项目
+-- -------------------------------------------
+-- 注意：dev 库可能已有项目，必须用自增 ID（不能硬编码 1,2,3）
+-- 这里用 SET @next_id 保证幂等：先查 max(id)，从 max+1 开始
+SET @next_pid := (SELECT COALESCE(MAX(id), 0) FROM proj_project) + 1;
+SET @next_eid := (SELECT COALESCE(MAX(id), 0) FROM eval_evaluation) + 1;
+
+INSERT INTO proj_project (id, project_name, customer_name, source_system_id, target_system_id, project_leader, contact, description, evaluation_date, status, user_id, create_by) VALUES
+(@next_pid + 0, CONCAT('XX集团ERP迁移_全局统计种子01_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), 'XX集团', 1, 11, '张三', '13800138001', '种子数据：用于全局统计仪表盘（大型项目）', '2026-06-01', 'COMPLETED', 1, 'system'),
+(@next_pid + 1, CONCAT('江西国泰ERP升级_全局统计种子02_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), '江西国泰', 1, 11, '李四', '13800138002', '种子数据：用于全局统计仪表盘（中型项目）', '2026-05-15', 'COMPLETED', 1, 'system'),
+(@next_pid + 2, CONCAT('华东制造ERP替换_全局统计种子03_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), '华东制造', 4, 11, '王五', '13800138003', '种子数据：用于全局统计仪表盘（小型项目）', '2026-04-20', 'COMPLETED', 1, 'system');
+
+-- 评估记录（core_workload / report_workload / total_workload 三个值必填，供聚合 SQL 用）
+INSERT INTO eval_evaluation (id, project_id, table_count, data_volume, data_volume_ladder_id, user_count, user_count_ladder_id, report_count, has_custom_dev, custom_dev_count, custom_dev_workload, core_workload, report_workload, total_workload, evaluation_status, evaluation_time) VALUES
+(@next_eid + 0, @next_pid + 0, 200, 500.00, 4, 800, 4, 60, 1, 5, 30.00, 220.50, 30.00, 280.50, 'COMPLETED', '2026-06-01 10:00:00'),
+(@next_eid + 1, @next_pid + 1, 120, 200.00, 3, 300, 3, 35, 0, 0, 0.00, 145.20, 17.50, 162.70, 'COMPLETED', '2026-05-15 10:00:00'),
+(@next_eid + 2, @next_pid + 2, 60, 30.00, 3, 100, 2, 20, 0, 0, 0.00, 78.00, 10.00, 88.00, 'COMPLETED', '2026-04-20 10:00:00');
+
+-- 项目模块配置（每个项目挑 3-4 个模块，覆盖不同 category，确保按模块聚合有数据）
+-- dev 库 sys_module 仅有 id=1 财务会计（system_id=13），用兜底映射：
+-- 若指定模块名不存在，则用 id=1（财务会计）；weight 字段也兜底
+INSERT INTO proj_module_config (project_id, module_id, weight) VALUES
+-- 项目 @next_pid+0：大项目，6 个 config（全用 id=1，模拟"同一模块被选多次"）
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='总账管理' AND system_id=1), 1), 1.20),
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='采购管理' AND system_id=1), 1), 1.40),
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='销售管理' AND system_id=1), 1), 1.40),
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='生产计划' AND system_id=1), 1), 1.80),
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='人事管理' AND system_id=1), 1), 1.10),
+(@next_pid + 0, COALESCE((SELECT id FROM sys_module WHERE module_name='应收管理' AND system_id=1), 1), 1.10),
+-- 项目 @next_pid+1：中项目，4 个 config
+(@next_pid + 1, COALESCE((SELECT id FROM sys_module WHERE module_name='总账管理' AND system_id=1), 1), 1.20),
+(@next_pid + 1, COALESCE((SELECT id FROM sys_module WHERE module_name='采购管理' AND system_id=1), 1), 1.40),
+(@next_pid + 1, COALESCE((SELECT id FROM sys_module WHERE module_name='销售管理' AND system_id=1), 1), 1.40),
+(@next_pid + 1, COALESCE((SELECT id FROM sys_module WHERE module_name='库存管理' AND system_id=1), 1), 1.30),
+-- 项目 @next_pid+2：小项目，3 个 config
+(@next_pid + 2, COALESCE((SELECT id FROM sys_module WHERE module_name='总账管理' AND system_id=1), 1), 1.20),
+(@next_pid + 2, COALESCE((SELECT id FROM sys_module WHERE module_name='应收管理' AND system_id=1), 1), 1.10),
+(@next_pid + 2, COALESCE((SELECT id FROM sys_module WHERE module_name='应付管理' AND system_id=1), 1), 1.10);
+
 
 -- ============================================
 -- 第八部分：视图创建（可选，便于查询）
