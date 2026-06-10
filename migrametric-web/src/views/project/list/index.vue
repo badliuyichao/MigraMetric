@@ -20,7 +20,7 @@
           <el-input v-model="searchForm.customerName" data-testid="search-customer-name" placeholder="请输入客户名称" clearable />
         </el-form-item>
         <el-form-item label="项目状态">
-          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable>
+          <el-select v-model="searchForm.status" data-testid="search-status" placeholder="请选择" clearable style="width: 160px">
             <el-option label="草稿" value="DRAFT" />
             <el-option label="进行中" value="IN_PROGRESS" />
             <el-option label="已完成" value="COMPLETED" />
@@ -55,7 +55,7 @@
             {{ row.sourceSystemName || '-' }} → {{ row.targetSystemName || '-' }}
           </template>
         </el-table-column>
-        <el-table-column prop="projectLeader" label="负责人" width="100" />
+        <el-table-column prop="projectLeader" label="负责人" width="120" />
         <el-table-column prop="statusText" label="状态" width="100">
           <template #default="{ row }">
             <el-tag :type="getStatusType(row.status)">{{ row.statusText }}</el-tag>

@@ -200,3 +200,39 @@ CFG-007~011 采用 **API + UI 双层验证**：
 - API 层：直接调后端 `/api/modules?pageNum=X&pageSize=Y` 验证分页逻辑
 - UI 层：CFG-007 验证表格行数 = pageSize、CFG-011 验证空数据 UI 状态
 - 通过 `seedModulesViaApi` / `cleanupModules` helper 自造测试数据，不依赖 dev 库现有数据量
+
+## 十一、用户管理前端开发回归（2026-06-09 晚间 · §3.1.6）
+
+### 改动清单
+
+| 文件 | 改动 | 性质 |
+| --- | --- | --- |
+| `web/src/api/user/users.ts` | **新增** 用户管理 API 模块（8 个接口函数） | 前端 |
+| `web/src/views/user/index.vue` | **新增** 用户管理页面（列表/搜索/分页/CRUD/重置密码/启禁用） | 前端 |
+| `web/src/router/index.ts` | 新增 `/system/users` 路由（ADMIN 权限） | 前端 |
+| `web/src/layouts/index.vue` | 系统管理子菜单新增"用户管理" | 前端 |
+| `web/tests/e2e/user-management.spec.ts` | **新增** 8 个 E2E 用例（UM-001~008） | E2E |
+| `docs/implementation/API接口文档.md` | 新增 §十二 用户管理接口 | 文档 |
+| `docs/develop/测试方案及测试计划（合集）.md` | 修正 6.1 状态 + 新增 §十三 E2E 测试方案 | 文档 |
+| `docs/architecture/技术架构文档.md` | 新增 10.Y 用户管理前端实现路径 | 文档 |
+
+### 测试结果
+
+**用户管理 E2E**：8/8 通过
+
+```
+✓ UM-001  用户列表分页渲染
+✓ UM-002  新增用户
+✓ UM-003  编辑用户
+✓ UM-004  重置密码
+✓ UM-005  启用/禁用用户
+✓ UM-006  删除用户
+✓ UM-007  搜索筛选
+✓ UM-008  RBAC 拦截（admin 可访问）
+```
+
+**全量 E2E 回归**：42 passed / 1 failed / 1 skipped
+
+- 1 failed：EV-002（报表系数期望 0.5 但 dev 库值为 5，已有问题，与本次改动无关）
+- 1 skipped：CFG-006（testuser 账号未初始化）
+- 无新增回归
