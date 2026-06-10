@@ -419,6 +419,7 @@ import {
   completeEvaluation,
   getConfiguredModules
 } from '@/api/evaluation/evaluations'
+import { listEnabledModules } from '@/api/module/modules'
 import type {
   EvaluationMetrics,
   EvaluationDetailVO,
@@ -446,6 +447,7 @@ const projectId = ref(0)
 const projectName = ref('')
 const customerName = ref('')
 const sourceSystemName = ref('')
+const sourceSystemId = ref<number | null>(null)
 const targetSystemName = ref('')
 const projectLeader = ref('')
 const evaluationDate = ref('')
@@ -530,6 +532,7 @@ async function loadProjectInfo() {
     projectName.value = detail.projectName || ''
     customerName.value = detail.customerName || ''
     sourceSystemName.value = detail.sourceSystemName || ''
+    sourceSystemId.value = detail.sourceSystemId ?? null
     targetSystemName.value = detail.targetSystemName || ''
     projectLeader.value = detail.projectLeader || ''
     evaluationDate.value = detail.evaluationDate || ''
@@ -610,44 +613,42 @@ async function loadExistingEvaluation(projectId: number) {
 }
 
 /**
- * 加载可用模块列表（从API获取）
+ * 加载可用模块列表（按 sourceSystemId 从模块库拉，再叠加已配置项的 checked/weight 状态）
  */
 async function loadAvailableModules() {
   try {
-    const modules: ModuleConfigItem[] = await getProjectModules(projectId.value)
-    availableModules.value = modules.map((mod: ModuleConfigItem) => ({
-      moduleId: mod.moduleId,
-      moduleName: mod.moduleName,
-      category: mod.category,
-      baseWorkload: mod.baseWorkload,
-      defaultWeight: mod.defaultWeight,
-      weight: mod.weight || mod.defaultWeight,
-      checked: mod.checked || false
-    }))
+    // 修复点：原代码调 getProjectModules(projectId) 实际返"已配置"列表，
+    // 新建项目/未配置时永远是空的，导致 step2 无可选模块。
+    // 改为按 sourceSystemId 调 listEnabledModules 拉"可选模块列表"
+    const allEnabled = sourceSystemId.value
+      ? await listEnabledModules(sourceSystemId.value)
+      : await listEnabledModules()
+
+    // 与 getConfiguredModules 的 checked/weight 合并（与原逻辑一致）
+    const configuredModules = await getConfiguredModules(projectId.value)
+    const configuredMap = new Map(configuredModules.map(m => [m.moduleId, m]))
+
+    availableModules.value = (allEnabled as any[]).map(mod => {
+      const configured = configuredMap.get(mod.id)
+      return {
+        moduleId: mod.id,
+        moduleName: mod.moduleName,
+        category: mod.category,
+        baseWorkload: mod.baseWorkload,
+        defaultWeight: mod.defaultWeight,
+        weight: configured?.weight ?? mod.defaultWeight,
+        checked: !!configured
+      }
+    })
 
     // 保存初始模块列表
     initialModules.value = [...availableModules.value]
 
-    // 加载已配置的模块
-    const configuredModules = await getConfiguredModules(projectId.value)
-    if (configuredModules.length > 0) {
-      const configuredMap = new Map(configuredModules.map(m => [m.moduleId, m]))
+    // 选中列表初始化
+    selectedModules.value = availableModules.value.filter(m => m.checked)
 
-      // 根据已有配置设置选中状态
-      availableModules.value.forEach(mod => {
-        const configured = configuredMap.get(mod.moduleId)
-        if (configured) {
-          mod.checked = true
-          mod.weight = configured.weight || mod.defaultWeight
-        }
-      })
-
-      // 更新选中列表中的模块
-      selectedModules.value = availableModules.value.filter(m => m.checked)
-
-      // 标记模块已加载
-      modulesLoaded.value = true
-    }
+    // 标记模块已加载
+    modulesLoaded.value = true
   } catch {
     ElMessage.error('加载模块列表失败')
     availableModules.value = []
