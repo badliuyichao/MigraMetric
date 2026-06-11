@@ -46,34 +46,62 @@
         <el-divider />
 
         <div class="action-buttons">
-          <el-button
-            v-if="projectInfo.status === 'DRAFT'"
-            data-testid="btn-start-evaluation"
-            type="primary"
-            @click="handleStartEvaluation"
-          >
-            开始评估
-          </el-button>
-          <el-button
-            v-else-if="projectInfo.status === 'IN_PROGRESS'"
-            data-testid="btn-continue-evaluation"
-            type="primary"
-            @click="handleContinueEvaluation"
-          >
-            继续评估
-          </el-button>
-          <el-button
-            v-if="projectInfo.hasEvaluation"
-            data-testid="btn-view-report"
-            type="success"
-            @click="handleViewReport"
-          >
-            查看报告
-          </el-button>
-          <el-button @click="handleExport">导出报告</el-button>
-          <el-button v-if="projectInfo.status === 'DRAFT'" data-testid="btn-copy-project" @click="handleCopy">复制项目</el-button>
-          <el-button v-if="projectInfo.status === 'COMPLETED'" type="warning" data-testid="btn-archive-project" @click="handleArchive">归档项目</el-button>
-          <el-button v-if="projectInfo.status === 'DRAFT'" type="danger" data-testid="btn-delete-project" @click="handleDelete">删除项目</el-button>
+          <!-- DRAFT 状态：完整操作权限 -->
+          <template v-if="projectInfo.status === 'DRAFT'">
+            <el-button
+              data-testid="btn-start-evaluation"
+              type="primary"
+              @click="handleStartEvaluation"
+            >
+              开始评估
+            </el-button>
+            <el-button @click="handleExport">导出报告</el-button>
+            <el-button data-testid="btn-copy-project" @click="handleCopy">复制项目</el-button>
+            <el-button type="danger" data-testid="btn-delete-project" @click="handleDelete">删除项目</el-button>
+          </template>
+
+          <!-- IN_PROGRESS 状态：继续评估 + 导出 + 复制 -->
+          <template v-else-if="projectInfo.status === 'IN_PROGRESS'">
+            <el-button
+              data-testid="btn-continue-evaluation"
+              type="primary"
+              @click="handleContinueEvaluation"
+            >
+              继续评估
+            </el-button>
+            <el-button @click="handleExport">导出报告</el-button>
+            <el-button data-testid="btn-copy-project" @click="handleCopy">复制项目</el-button>
+          </template>
+
+          <!-- COMPLETED 状态：查看报告 + 重新评估 + 导出 + 复制 + 归档 -->
+          <template v-else-if="projectInfo.status === 'COMPLETED'">
+            <el-button
+              v-if="projectInfo.hasEvaluation"
+              data-testid="btn-view-report"
+              type="success"
+              @click="handleViewReport"
+            >
+              查看报告
+            </el-button>
+            <el-button data-testid="btn-restart-evaluation" @click="handleContinueEvaluation">重新评估</el-button>
+            <el-button @click="handleExport">导出报告</el-button>
+            <el-button data-testid="btn-copy-project" @click="handleCopy">复制项目</el-button>
+            <el-button type="warning" data-testid="btn-archive-project" @click="handleArchive">归档项目</el-button>
+          </template>
+
+          <!-- ARCHIVED 状态：只读，仅可查看报告/导出 -->
+          <template v-else-if="projectInfo.status === 'ARCHIVED'">
+            <el-button
+              v-if="projectInfo.hasEvaluation"
+              data-testid="btn-view-report"
+              type="success"
+              @click="handleViewReport"
+            >
+              查看报告
+            </el-button>
+            <el-button data-testid="btn-export-report-archived" @click="handleExport">导出报告</el-button>
+            <el-tag type="info" effect="plain" data-testid="tag-archived-readonly">只读状态，不可修改</el-tag>
+          </template>
         </div>
       </el-card>
 
