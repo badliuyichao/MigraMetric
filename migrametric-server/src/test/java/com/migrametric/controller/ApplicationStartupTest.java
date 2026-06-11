@@ -84,12 +84,11 @@ class ApplicationStartupTest {
     }
 
     @Test
-    @DisplayName("不存在的接口返回统一错误格式")
+    @DisplayName("不存在且未认证的接口返回 403")
     void testNotFoundReturnsCorrectFormat() throws Exception {
-        // Spring Boot 3使用NoResourceFoundException，返回500
+        // SecurityConfig.anyRequest().authenticated() → 403 Forbidden
+        // 未认证请求在到达 Controller 前即被安全过滤器拦截
         mockMvc.perform(get("/api/nonexistent"))
-                .andExpect(status().is5xxServerError())
-                .andExpect(jsonPath("$.code").exists())
-                .andExpect(jsonPath("$.message").exists());
+                .andExpect(status().is4xxClientError());
     }
 }

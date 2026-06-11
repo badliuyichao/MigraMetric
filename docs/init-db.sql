@@ -289,7 +289,7 @@ CREATE TABLE proj_project (
     contact             VARCHAR(100)             DEFAULT NULL COMMENT '联系方式',
     description         VARCHAR(1000)            DEFAULT NULL COMMENT '项目描述',
     evaluation_date     DATE            NOT NULL COMMENT '评估日期',
-    status              VARCHAR(20)     NOT NULL DEFAULT 'DRAFT' COMMENT '项目状态：DRAFT-草稿，IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档',
+    status              ENUM('DRAFT','IN_PROGRESS','COMPLETED','ARCHIVED') NOT NULL DEFAULT 'DRAFT' COMMENT '项目状态：DRAFT-草稿，IN_PROGRESS-进行中，COMPLETED-已完成，ARCHIVED-已归档',
     user_id             BIGINT UNSIGNED NOT NULL COMMENT '创建用户ID',
     create_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',

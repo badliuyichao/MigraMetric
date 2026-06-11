@@ -51,6 +51,8 @@ public class SecurityConfig {
                 .requestMatchers(HttpMethod.OPTIONS, "/api/auth/logout").permitAll()
                 // 健康检查
                 .requestMatchers("/api/health").permitAll()
+                // 系统接口（健康检查、CORS 测试用）
+                .requestMatchers("/api/system/**").permitAll()
                 // Swagger文档
                 .requestMatchers("/swagger-ui.html", "/swagger-ui/**", "/v3/api-docs/**").permitAll()
                 // 其他所有请求需要认证
@@ -67,6 +69,10 @@ public class SecurityConfig {
         configuration.setAllowedOriginPatterns(List.of("*"));
         configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of(
+            "Access-Control-Allow-Origin", "Access-Control-Allow-Methods",
+            "Access-Control-Allow-Headers", "Access-Control-Max-Age",
+            "Access-Control-Expose-Headers"));
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
