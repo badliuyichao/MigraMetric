@@ -45,9 +45,10 @@
 - （后续 P2）dev 库清理 12 个孤儿 DRAFT 项目
 
 ### 修复 commit
-TBD（待 commit）
+1. `8ba5e92` fix(evaluation): completeEvaluation 同步更新 project.status
+2. （待 commit）feat(project): 项目状态机重构 + 枚举化 + 详情页分支补全
 
 ### 回归结果
-- 单测：✅ 编译通过
-- E2E：✅ 50/1/0（6.8 分钟）
-  - E2E-FLOW-001 增强断言 `project.status === 'COMPLETED'`（修复有效）
+- 单测：✅ ProjectStateMachineTest 8/8 通过
+- E2E：✅ 49/1/0（13.1 分钟）
+  - E2E-FLOW-001 增强断言 `project.status === 'COMPLETED'` 持续生效
