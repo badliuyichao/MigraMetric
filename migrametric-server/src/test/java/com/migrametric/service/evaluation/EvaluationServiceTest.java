@@ -9,6 +9,7 @@ import com.migrametric.entity.ladder.DataVolumeLadder;
 import com.migrametric.entity.ladder.UserCountLadder;
 import com.migrametric.entity.project.Project;
 import com.migrametric.mapper.evaluation.EvaluationMapper;
+import com.migrametric.service.project.ProjectStateMachine;
 import com.migrametric.mapper.evaluation.ProjectModuleConfigMapper;
 import com.migrametric.mapper.ladder.DataVolumeLadderMapper;
 import com.migrametric.mapper.ladder.UserCountLadderMapper;
@@ -62,6 +63,9 @@ class EvaluationServiceTest {
 
     @Mock
     private ProjectMapper projectMapper;
+
+    @Mock
+    private ProjectStateMachine projectStateMachine;
 
     @InjectMocks
     private EvaluationServiceImpl evaluationService;

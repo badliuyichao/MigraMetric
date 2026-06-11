@@ -484,6 +484,6 @@ public class ProjectServiceImpl implements ProjectService {
             projectMapper.updateById(project);
         }
 
-        log.info("归档项目成功: id={}, name={}", id, project.getProjectName());
+        log.info("归档项目成功: id={}, name={}", id, project != null ? project.getProjectName() : "未知");
     }
 }

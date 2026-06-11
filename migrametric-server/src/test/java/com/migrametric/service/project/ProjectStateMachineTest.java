@@ -4,6 +4,7 @@ import com.migrametric.common.BusinessException;
 import com.migrametric.entity.project.Project;
 import com.migrametric.entity.project.ProjectStatus;
 import com.migrametric.mapper.project.ProjectMapper;
+import com.migrametric.mapper.project.ProjectStatusHistoryMapper;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -33,6 +34,9 @@ class ProjectStateMachineTest {
 
     @Mock
     private ProjectMapper projectMapper;
+
+    @Mock
+    private ProjectStatusHistoryMapper projectStatusHistoryMapper;
 
     @InjectMocks
     private ProjectStateMachine stateMachine;

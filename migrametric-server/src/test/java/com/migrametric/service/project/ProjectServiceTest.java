@@ -8,6 +8,8 @@ import com.migrametric.dto.project.ProjectQueryDTO;
 import com.migrametric.dto.project.ProjectUpdateDTO;
 import com.migrametric.entity.evaluation.Evaluation;
 import com.migrametric.entity.project.Project;
+import com.migrametric.entity.project.ProjectStatus;
+import com.migrametric.service.project.ProjectEvent;
 import com.migrametric.entity.system.SystemType;
 import com.migrametric.mapper.project.ProjectMapper;
 import com.migrametric.mapper.system.SystemTypeMapper;
@@ -34,6 +36,7 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.when;
 
@@ -52,6 +55,9 @@ class ProjectServiceTest {
 
     @Mock
     private EvaluationService evaluationService;
+
+    @Mock
+    private ProjectStateMachine projectStateMachine;
 
     @InjectMocks
     private ProjectServiceImpl projectService;
@@ -604,6 +610,21 @@ class ProjectServiceTest {
     @DisplayName("archive 测试")
     class ArchiveTests {
 
+        @BeforeEach
+        void setUpArchive() {
+            // 状态机 mock 默认行为：合法流转返回下一状态，非法抛异常
+            lenient().when(projectStateMachine.transition(any(), any()))
+                    .thenAnswer(inv -> {
+                        ProjectEvent event = inv.getArgument(1);
+                        Project project = projectMapper.selectById(inv.getArgument(0));
+                        if (project == null) throw new BusinessException(com.migrametric.common.ResultCode.DATA_NOT_FOUND, "项目不存在");
+                        String status = project.getStatus();
+                        if ("DRAFT".equals(status) || "IN_PROGRESS".equals(status) || "ARCHIVED".equals(status))
+                            throw new BusinessException(com.migrametric.common.ResultCode.PARAM_INVALID, "非法状态流转");
+                        return ProjectStatus.ARCHIVED;
+                    });
+        }
+
         @Test
         @DisplayName("应成功归档已完成项目")
         void shouldArchiveCompletedProjectSuccessfully() {
@@ -631,7 +652,7 @@ class ProjectServiceTest {
 
             assertThatThrownBy(() -> projectService.archive(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("只有已完成的项目可以归档");
+                    .hasMessageContaining("非法状态流转");
         }
 
         @Test
@@ -642,7 +663,7 @@ class ProjectServiceTest {
 
             assertThatThrownBy(() -> projectService.archive(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("只有已完成的项目可以归档");
+                    .hasMessageContaining("非法状态流转");
         }
 
         @Test
@@ -653,7 +674,7 @@ class ProjectServiceTest {
 
             assertThatThrownBy(() -> projectService.archive(1L))
                     .isInstanceOf(BusinessException.class)
-                    .hasMessageContaining("只有已完成的项目可以归档");
+                    .hasMessageContaining("非法状态流转");
         }
     }
 }
