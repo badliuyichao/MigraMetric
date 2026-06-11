@@ -331,9 +331,7 @@ Authorization: Bearer <token>
     "customDevWorkload": 50,
     "coreWorkload": 156.38,
     "reportWorkload": 25,
-    "totalWorkload": 231.38,
-    "evaluationStatus": "COMPLETED",
-    "evaluationStatusText": "已完成"
+    "totalWorkload": 231.38
   }
 }
 ```

@@ -52,3 +52,23 @@
 - 单测：✅ ProjectStateMachineTest 8/8 通过
 - E2E：✅ 49/1/0（13.1 分钟）
   - E2E-FLOW-001 增强断言 `project.status === 'COMPLETED'` 持续生效
+
+---
+
+## BUG-20260611-01：eval_evaluation.evaluation_status 与 proj_project.status 字段冗余并存
+
+- **状态**：进行中
+- **优先级**：🟢 P3（结构优化 · 技术债）
+- **发现版本**：状态机重构（BUG-20260610-02）附带审计发现
+- **根因分析**：
+  1. 两个表各自维护一个"状态"字段且含义重叠：`proj_project.status`（4 状态）与 `eval_evaluation.evaluation_status`（3 状态）
+  2. 评估 DRAFT/IN_PROGRESS/COMPLETED 完全包含在项目 4 状态中，字段不提供额外信息
+  3. 3 处代码（createEvaluation/saveIndicators/completeEvaluation）需要同步更新两处，正是 BUG-20260610-02 的结构根因
+  4. 如果有人绕过 StateMachine 直写 evaluation_status，两套数据就会分裂
+- **修复方案（方案A）**：删除 `eval_evaluation.evaluation_status` 字段
+  - 所有 evaluationStatus 读取点改为读 `project.status`
+  - `getEvaluationStatusText()` 直接映射 project.status
+  - 前端 `evaluationStatus/evaluationStatusText` 从 `projectInfo.status` 派生
+  - init-db.sql DDL 同步删除该列
+- **修复 commit**：待 commit
+- **回归结果**：单测 452/0/0 + E2E 54/1/0（6.5 分钟，无回归）

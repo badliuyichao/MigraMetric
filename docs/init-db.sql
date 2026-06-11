@@ -330,7 +330,6 @@ CREATE TABLE eval_evaluation (
     core_workload        DECIMAL(10,2)            DEFAULT 0 COMMENT '核心迁移工作量（人天）',
     report_workload      DECIMAL(10,2)            DEFAULT 0 COMMENT '报表迁移工作量（人天）',
     total_workload       DECIMAL(10,2)            DEFAULT 0 COMMENT '总工作量（人天）',
-    evaluation_status    VARCHAR(20)     NOT NULL DEFAULT 'DRAFT' COMMENT '评估状态：DRAFT-草稿，IN_PROGRESS-进行中，COMPLETED-已完成',
     evaluation_time      DATETIME                 DEFAULT NULL COMMENT '评估完成时间',
     create_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '创建时间',
     update_time         DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP COMMENT '更新时间',
@@ -340,7 +339,6 @@ CREATE TABLE eval_evaluation (
     UNIQUE KEY uk_project_id (project_id),
     KEY idx_data_volume_ladder (data_volume_ladder_id),
     KEY idx_user_count_ladder (user_count_ladder_id),
-    KEY idx_evaluation_status (evaluation_status),
     KEY idx_create_time (create_time)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='评估表';
 
@@ -746,10 +744,10 @@ INSERT INTO proj_project (id, project_name, customer_name, source_system_id, tar
 (@next_pid + 2, CONCAT('华东制造ERP替换_全局统计种子03_', DATE_FORMAT(NOW(), '%Y%m%d%H%i%s')), '华东制造', 4, 11, '王五', '13800138003', '种子数据：用于全局统计仪表盘（小型项目）', '2026-04-20', 'COMPLETED', 1, 'system');
 
 -- 评估记录（core_workload / report_workload / total_workload 三个值必填，供聚合 SQL 用）
-INSERT INTO eval_evaluation (id, project_id, table_count, data_volume, data_volume_ladder_id, user_count, user_count_ladder_id, report_count, has_custom_dev, custom_dev_count, custom_dev_workload, core_workload, report_workload, total_workload, evaluation_status, evaluation_time) VALUES
-(@next_eid + 0, @next_pid + 0, 200, 500.00, 4, 800, 4, 60, 1, 5, 30.00, 220.50, 30.00, 280.50, 'COMPLETED', '2026-06-01 10:00:00'),
-(@next_eid + 1, @next_pid + 1, 120, 200.00, 3, 300, 3, 35, 0, 0, 0.00, 145.20, 17.50, 162.70, 'COMPLETED', '2026-05-15 10:00:00'),
-(@next_eid + 2, @next_pid + 2, 60, 30.00, 3, 100, 2, 20, 0, 0, 0.00, 78.00, 10.00, 88.00, 'COMPLETED', '2026-04-20 10:00:00');
+INSERT INTO eval_evaluation (id, project_id, table_count, data_volume, data_volume_ladder_id, user_count, user_count_ladder_id, report_count, has_custom_dev, custom_dev_count, custom_dev_workload, core_workload, report_workload, total_workload, evaluation_time) VALUES
+(@next_eid + 0, @next_pid + 0, 200, 500.00, 4, 800, 4, 60, 1, 5, 30.00, 220.50, 30.00, 280.50, '2026-06-01 10:00:00'),
+(@next_eid + 1, @next_pid + 1, 120, 200.00, 3, 300, 3, 35, 0, 0, 0.00, 145.20, 17.50, 162.70, '2026-05-15 10:00:00'),
+(@next_eid + 2, @next_pid + 2, 60, 30.00, 3, 100, 2, 20, 0, 0, 0.00, 78.00, 10.00, 88.00, '2026-04-20 10:00:00');
 
 -- 项目模块配置（每个项目挑 3-4 个模块，覆盖不同 category，确保按模块聚合有数据）
 -- dev 库 sys_module 仅有 id=1 财务会计（system_id=13），用兜底映射：
@@ -793,7 +791,6 @@ SELECT
     ts.system_name AS target_system_name,
     u.user_name AS creator_name,
     e.total_workload,
-    e.evaluation_status,
     COUNT(DISTINCT mc.id) AS module_count
 FROM proj_project p
 LEFT JOIN sys_system_type ss ON p.source_system_id = ss.id
@@ -819,7 +816,6 @@ SELECT
     e.user_count,
     e.report_count,
     e.has_custom_dev,
-    e.evaluation_status,
     e.evaluation_time,
     dvl.ladder_name AS data_volume_ladder,
     ucl.ladder_name AS user_count_ladder
