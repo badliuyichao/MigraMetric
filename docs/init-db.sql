@@ -887,7 +887,35 @@ DELIMITER ;
 
 
 -- ============================================
--- 第十部分：完成提示
+-- 第十部分：项目状态历史表（REQ-§3.2.4）
+-- ============================================
+
+-- -------------------------------------------
+-- 12. proj_status_history - 项目状态变更历史
+-- -------------------------------------------
+DROP TABLE IF EXISTS proj_status_history;
+CREATE TABLE proj_status_history (
+    id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '历史记录ID',
+    project_id        BIGINT UNSIGNED NOT NULL COMMENT '项目ID',
+    from_status       VARCHAR(20)              DEFAULT NULL COMMENT '变更前状态',
+    to_status         VARCHAR(20)     NOT NULL COMMENT '变更后状态',
+    event             VARCHAR(30)     NOT NULL COMMENT '事件：CREATE/EVAL_START/EVAL_COMPLETE/ARCHIVE/MANUAL_EDIT',
+    operator          VARCHAR(64)     NOT NULL COMMENT '操作人',
+    reason            VARCHAR(500)             DEFAULT NULL COMMENT '业务备注',
+    change_time       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+    manual_edit       TINYINT         NOT NULL DEFAULT 0 COMMENT '是否人工补录：0-系统自动 1-ADMIN 补录',
+    PRIMARY KEY (id),
+    KEY idx_project_time (project_id, change_time DESC),
+    KEY idx_event (event)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='项目状态历史表';
+
+-- 存量项目补录：状态机上线前已存在项目补一条 CREATE 历史
+INSERT INTO proj_status_history (project_id, from_status, to_status, event, operator, reason, change_time, manual_edit)
+SELECT id, NULL, status, 'CREATE', 'system', '存量项目历史补录', NOW(), 1 FROM proj_project;
+
+
+-- ============================================
+-- 第十一部分：完成提示
 -- ============================================
 
 SELECT '========================================' AS '';
