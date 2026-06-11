@@ -1,5 +1,7 @@
 package com.migrametric.service.project.impl;
 
+import com.migrametric.service.project.ProjectEvent;
+import com.migrametric.service.project.ProjectStateMachine;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.metadata.IPage;
 import com.baomidou.mybatisplus.extension.plugins.pagination.Page;
@@ -48,6 +50,7 @@ public class ProjectServiceImpl implements ProjectService {
     private final ProjectMapper projectMapper;
     private final SystemTypeMapper systemTypeMapper;
     private final EvaluationService evaluationService;
+    private final ProjectStateMachine projectStateMachine;
 
     /**
      * 项目状态常量
@@ -335,13 +338,11 @@ public class ProjectServiceImpl implements ProjectService {
         if (status == null) {
             return "";
         }
-        return switch (status) {
-            case STATUS_DRAFT -> "草稿";
-            case STATUS_IN_PROGRESS -> "进行中";
-            case STATUS_COMPLETED -> "已完成";
-            case STATUS_ARCHIVED -> "已归档";
-            default -> "未知";
-        };
+        try {
+            return com.migrametric.entity.project.ProjectStatus.fromCode(status).getText();
+        } catch (IllegalArgumentException e) {
+            return "未知";
+        }
     }
 
     @Override
@@ -471,23 +472,15 @@ public class ProjectServiceImpl implements ProjectService {
     @Override
     @Transactional
     public void archive(Long id) {
-        // 查询项目
+        // 走状态机：自动校验"只有 COMPLETED 可归档" + 更新
+        projectStateMachine.transition(id, ProjectEvent.ARCHIVE);
+        // 状态机不更新 updateBy，这里补一下
         Project project = projectMapper.selectById(id);
-        if (project == null) {
-            throw new BusinessException(ResultCode.DATA_NOT_FOUND, "项目不存在");
+        if (project != null) {
+            project.setUpdateBy(UserContext.getCurrentUsername());
+            projectMapper.updateById(project);
         }
 
-        // 只有已完成状态可以归档
-        if (!STATUS_COMPLETED.equals(project.getStatus())) {
-            throw new BusinessException(ResultCode.PARAM_INVALID, "只有已完成的项目可以归档");
-        }
-
-        // 更新状态为已归档
-        project.setStatus(STATUS_ARCHIVED);
-        project.setUpdateTime(LocalDateTime.now());
-        project.setUpdateBy(UserContext.getCurrentUsername());
-
-        projectMapper.updateById(project);
         log.info("归档项目成功: id={}, name={}", id, project.getProjectName());
     }
 }

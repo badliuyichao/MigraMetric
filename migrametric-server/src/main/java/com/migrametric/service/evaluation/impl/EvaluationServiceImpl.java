@@ -16,6 +16,8 @@ import com.migrametric.mapper.ladder.DataVolumeLadderMapper;
 import com.migrametric.mapper.ladder.UserCountLadderMapper;
 import com.migrametric.mapper.project.ProjectMapper;
 import com.migrametric.service.evaluation.EvaluationService;
+import com.migrametric.service.project.ProjectEvent;
+import com.migrametric.service.project.ProjectStateMachine;
 import com.migrametric.vo.evaluation.EvaluationVO;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -39,6 +41,7 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final DataVolumeLadderMapper dataVolumeLadderMapper;
     private final UserCountLadderMapper userCountLadderMapper;
     private final ProjectMapper projectMapper;
+    private final ProjectStateMachine projectStateMachine;
 
     /**
      * 评估状态常量
@@ -166,6 +169,13 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setEvaluationStatus(EVAL_STATUS_DRAFT);
         evaluationMapper.insert(evaluation);
 
+        // 同步推进项目状态：DRAFT → IN_PROGRESS（走状态机，P1 修复）
+        try {
+            projectStateMachine.transition(dto.getProjectId(), ProjectEvent.EVAL_START);
+        } catch (BusinessException e) {
+            log.debug("项目状态推进跳过（非 DRAFT 状态可忽略）: {}", e.getMessage());
+        }
+
         log.info("创建评估记录成功, projectId: {}, evaluationId: {}", dto.getProjectId(), evaluation.getId());
         return evaluation.getId();
     }
@@ -238,12 +248,11 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setUpdateTime(LocalDateTime.now());
         evaluationMapper.updateById(evaluation);
 
-        // 同步更新项目状态为已完成（BUG-20260610-02 修复）
-        Project project = projectMapper.selectById(projectId);
-        if (project != null && !"ARCHIVED".equals(project.getStatus())) {
-            project.setStatus("COMPLETED");
-            project.setUpdateTime(LocalDateTime.now());
-            projectMapper.updateById(project);
+        // 同步推进项目状态：IN_PROGRESS → COMPLETED（走状态机，BUG-20260610-02 修复）
+        try {
+            projectStateMachine.transition(projectId, ProjectEvent.EVAL_COMPLETE);
+        } catch (BusinessException e) {
+            log.warn("项目状态推进失败（评估已完成但项目状态可能停留在 IN_PROGRESS）: {}", e.getMessage());
         }
 
         log.info("评估完成, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
