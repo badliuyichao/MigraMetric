@@ -572,6 +572,87 @@ MigraMetric/
 
 ---
 
+#### 6.1 项目状态历史（REQ-§3.2.4 增量 · 2026-06-11）
+
+**来源**：需求 §3.2.4 — 项目状态历史（审计追溯）。
+
+**业务决策**：以 dev 库为准（dev 库已含 16 个 DRAFT 历史项目，需先建表后做存量补录）。
+
+**关联文档**：
+- 需求 §3.2.4 → `docs/architecture/需求说明文档.md`
+- 产品 §3.2.4 → `docs/architecture/产品设计文档.md`
+- 技术 §10.W → `docs/architecture/技术架构文档.md`
+- API §12.x → `docs/implementation/API接口文档.md`
+- 测试 §十五 → `docs/develop/测试方案及测试计划（合集）.md`
+
+**任务清单**：
+
+| 序号 | 任务 | 估时 | 状态 |
+|------|------|------|------|
+| 1 | init-db.sql 第 12 节新增 proj_status_history 建表 + 存量补录 | 0.5h | ⬜ |
+| 2 | ProjectStatusHistory 实体 + Mapper + BaseMapper | 0.5h | ⬜ |
+| 3 | ProjectStatusHistoryVO + QueryDTO + CreateDTO | 0.5h | ⬜ |
+| 4 | ProjectStateMachine 注入 history Mapper，transition 内同事务写历史 | 1h | ⬜ |
+| 5 | ProjectEvent 枚举加 CREATE 与 MANUAL_EDIT | 0.3h | ⬜ |
+| 6 | ProjectServiceImpl.create() 末尾写 CREATE 历史 | 0.3h | ⬜ |
+| 7 | ProjectStatusHistoryService（分页查询 + 补录 + 权限） | 1h | ⬜ |
+| 8 | ProjectStatusHistoryController（GET list + POST manual） | 0.5h | ⬜ |
+| 9 | ProjectStatusHistory 单测 UTSH-001~010 | 1h | ⬜ |
+| 10 | 前端 API 模块 status-history.ts | 0.3h | ⬜ |
+| 11 | 前端 detail/index.vue 加 tab 切换（基础/评估/状态历史） | 1h | ⬜ |
+| 12 | 状态时间线 + 补录对话框 | 1.5h | ⬜ |
+| 13 | E2E SH-001~016 用例 | 2h | ⬜ |
+| 14 | 全量回归 + Bug 修复闭环 | 1h | ⬜ |
+
+**总计**：约 10.5 小时
+
+**init-db.sql 改动**（在第 11 节全局统计种子后插第 12 节）：
+
+```sql
+-- -------------------------------------------
+-- 12. proj_status_history - 项目状态变更历史
+-- -------------------------------------------
+DROP TABLE IF EXISTS proj_status_history;
+CREATE TABLE proj_status_history (
+    id                BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT '历史记录ID',
+    project_id        BIGINT UNSIGNED NOT NULL COMMENT '项目ID',
+    from_status       VARCHAR(20)              DEFAULT NULL COMMENT '变更前状态',
+    to_status         VARCHAR(20)     NOT NULL COMMENT '变更后状态',
+    event             VARCHAR(30)     NOT NULL COMMENT '事件：CREATE/EVAL_START/EVAL_COMPLETE/ARCHIVE/MANUAL_EDIT',
+    operator          VARCHAR(64)     NOT NULL COMMENT '操作人',
+    reason            VARCHAR(500)             DEFAULT NULL COMMENT '业务备注',
+    change_time       DATETIME        NOT NULL DEFAULT CURRENT_TIMESTAMP COMMENT '变更时间',
+    manual_edit       TINYINT         NOT NULL DEFAULT 0 COMMENT '是否人工补录：0-系统自动 1-ADMIN 补录',
+    PRIMARY KEY (id),
+    KEY idx_project_time (project_id, change_time DESC),
+    KEY idx_event (event)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci COMMENT='项目状态历史表';
+
+-- 存量项目历史补录：状态机上线前已存在的项目补一条 CREATE 历史
+INSERT INTO proj_status_history (project_id, from_status, to_status, event, operator, reason, change_time, manual_edit)
+SELECT id, NULL, status, 'CREATE', 'system', '存量项目历史补录', NOW(), 1 FROM proj_project;
+```
+
+**改动范围**：
+- 后端：~250 行（VO/DTO/Service/Controller/单测 + StateMachine 改造 + ProjectService 改造）
+- 前端：~200 行（API + 页面 tab + 时间线 + 补录对话框）
+- 数据库：1 个新表 + 1 条存量补录 INSERT
+
+**发布顺序**：
+1. Step 1 数据库迁移（新表 + 存量补录，无破坏性）
+2. Step 2-8 后端开发（含 StateMachine 改造，事务内写历史）
+3. Step 9 后端单测
+4. Step 10-12 前端开发
+5. Step 13 E2E
+6. Step 14 全量回归
+
+**依赖/风险**：
+- 依赖：ProjectStateMachine 现有架构（commit 470d7fd）
+- 风险：状态机事务内额外 1 次 INSERT 可能影响主业务性能（实测后评估）
+- 风险：存量 16 个 DRAFT 项目补录历史会一次性产生 16 条（一次性 INSERT 不阻塞）
+
+---
+
 ### 第六阶段：用户与权限（P1）
 
 **目标**：完善用户管理和权限控制

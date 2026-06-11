@@ -1265,6 +1265,146 @@ Authorization: Bearer <token>
 
 ---
 
+## 十二 x、项目状态历史接口（§3.2.4）
+
+> 权限要求：所有登录用户可查询；仅 ADMIN 可补录。
+> 业务说明：项目状态（草稿/进行中/已完成/已归档）每次自动变更都产生一条历史记录，append-only。
+
+### 12.x.1 分页查询项目状态历史
+
+**请求**
+
+```http
+GET /api/projects/{projectId}/status-history?pageNum=1&pageSize=10&operator=admin&event=EVAL_COMPLETE
+Authorization: Bearer <token>
+```
+
+| 参数 | 位置 | 类型 | 必填 | 说明 |
+|------|------|------|------|------|
+| projectId | Path | Long | 是 | 项目ID |
+| pageNum | Query | Integer | 否 | 页码，默认 1 |
+| pageSize | Query | Integer | 否 | 每页大小，默认 10，最大 50 |
+| operator | Query | String | 否 | 按操作人精确过滤 |
+| event | Query | String | 否 | 按事件类型过滤：CREATE/EVAL_START/EVAL_COMPLETE/ARCHIVE/MANUAL_EDIT |
+
+**响应**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": {
+    "records": [
+      {
+        "id": 17,
+        "projectId": 365,
+        "fromStatus": "COMPLETED",
+        "toStatus": "ARCHIVED",
+        "event": "ARCHIVE",
+        "operator": "admin",
+        "reason": "客户验收完成",
+        "changeTime": "2026-06-11T14:32:15",
+        "manualEdit": false
+      },
+      {
+        "id": 15,
+        "projectId": 365,
+        "fromStatus": "IN_PROGRESS",
+        "toStatus": "COMPLETED",
+        "event": "EVAL_COMPLETE",
+        "operator": "admin",
+        "reason": null,
+        "changeTime": "2026-06-11T12:25:33",
+        "manualEdit": false
+      }
+    ],
+    "total": 4,
+    "pageNum": 1,
+    "pageSize": 10
+  }
+}
+```
+
+| 字段 | 类型 | 说明 |
+|------|------|------|
+| records[].id | Long | 历史记录ID |
+| records[].projectId | Long | 项目ID |
+| records[].fromStatus | String | 变更前状态（CREATE 事件时为 null） |
+| records[].toStatus | String | 变更后状态 |
+| records[].event | String | 事件：CREATE/EVAL_START/EVAL_COMPLETE/ARCHIVE/MANUAL_EDIT |
+| records[].operator | String | 操作人 |
+| records[].reason | String | 备注（可空） |
+| records[].changeTime | String | 变更时间 |
+| records[].manualEdit | Boolean | 是否人工补录 |
+
+**业务规则**：
+- 按 `change_time DESC` 排序，最新变更在顶
+- 普通用户只能查自己创建的项目；ADMIN 可查所有项目（依赖业务权限中间件）
+- 0 条数据时返 200 + 空数组
+
+**错误码**：
+| code | 含义 |
+|------|------|
+| 200 | 成功 |
+| 401 | 未登录 |
+| 403 | 无权访问（非创建者且非 ADMIN）|
+
+### 12.x.2 人工补录状态历史（仅 ADMIN）
+
+**请求**
+
+```http
+POST /api/projects/{projectId}/status-history
+Authorization: Bearer <admin-token>
+Content-Type: application/json
+
+{
+  "fromStatus": "DRAFT",
+  "toStatus": "IN_PROGRESS",
+  "event": "MANUAL_EDIT",
+  "reason": "存量项目状态机上线前补录",
+  "changeTime": "2026-04-15T10:30:00"
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|------|------|------|------|
+| fromStatus | String | 是 | 变更前状态（DRAFT/IN_PROGRESS/COMPLETED/ARCHIVED） |
+| toStatus | String | 是 | 变更后状态 |
+| event | String | 是 | 必须为 `MANUAL_EDIT` |
+| reason | String | 否 | 业务备注 |
+| changeTime | String | 是 | 补录的时间（任意过去时间） |
+
+**响应**
+
+```json
+{
+  "code": 200,
+  "message": "success",
+  "data": 18
+}
+```
+
+`data` 为新创建的历史记录 ID。
+
+**业务规则**：
+- 仅 ADMIN 角色可调用
+- 补录的 `event` **必须为 `MANUAL_EDIT`**，其他事件系统自动写
+- `manual_edit` 字段自动写 1
+- `from_status` 和 `to_status` 校验不同时（不能同状态补录）
+- `change_time` 不能是未来时间
+- 同一 `(project_id, from_status, to_status, event, change_time)` 不允许重复（防误点）
+
+**错误码**：
+| code | 含义 |
+|------|------|
+| 200 | 成功 |
+| 400 | 参数非法（同状态/未来时间/event 不为 MANUAL_EDIT/重复）|
+| 401 | 未登录 |
+| 403 | 非 ADMIN |
+
+---
+
 ## 十三、错误码说明
 
 | 错误码 | 说明 |
