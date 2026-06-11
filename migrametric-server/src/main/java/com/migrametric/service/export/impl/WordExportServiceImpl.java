@@ -140,7 +140,7 @@ public class WordExportServiceImpl implements WordExportService {
             project.getEvaluationDate() != null ? project.getEvaluationDate().toString() : "-");
         setLabelValueRow(table, rowIndex++, "源系统", "系统" + nvl(project.getSourceSystemId()));
         setLabelValueRow(table, rowIndex++, "目标系统", "系统" + nvl(project.getTargetSystemId()));
-        setLabelValueRow(table, rowIndex++, "评估状态", nvl(evaluation.getEvaluationStatus()));
+        setLabelValueRow(table, rowIndex++, "评估状态", nvl(project != null ? project.getStatus() : ""));
         setLabelValueRow(table, rowIndex++, "总工作量", formatWorkload(evaluation.getTotalWorkload()) + " 人天");
         setLabelValueRow(table, rowIndex++, "预估工期", formatEstimatedMonths(evaluation.getTotalWorkload()) + " 人月");
 

@@ -43,12 +43,6 @@ public class EvaluationServiceImpl implements EvaluationService {
     private final ProjectMapper projectMapper;
     private final ProjectStateMachine projectStateMachine;
 
-    /**
-     * 评估状态常量
-     */
-    private static final String EVAL_STATUS_DRAFT = "DRAFT";
-    private static final String EVAL_STATUS_IN_PROGRESS = "IN_PROGRESS";
-    private static final String EVAL_STATUS_COMPLETED = "COMPLETED";
 
     @Override
     public EvaluationVO getByProjectId(Long projectId) {
@@ -89,8 +83,11 @@ public class EvaluationServiceImpl implements EvaluationService {
         vo.setCoreWorkload(evaluation.getCoreWorkload());
         vo.setReportWorkload(evaluation.getReportWorkload());
         vo.setTotalWorkload(evaluation.getTotalWorkload());
-        vo.setEvaluationStatus(evaluation.getEvaluationStatus());
-        vo.setEvaluationStatusText(getEvaluationStatusText(evaluation.getEvaluationStatus()));
+        // BUG-20260611-01: 评估状态从 project.status 派生
+        Project project = projectMapper.selectById(evaluation.getProjectId());
+        String status = project != null ? project.getStatus() : "DRAFT";
+        vo.setEvaluationStatus(status);
+        vo.setEvaluationStatusText(getEvaluationStatusText(status));
         vo.setEvaluationTime(evaluation.getEvaluationTime());
         vo.setCreateTime(evaluation.getCreateTime());
         vo.setUpdateTime(evaluation.getUpdateTime());
@@ -120,18 +117,17 @@ public class EvaluationServiceImpl implements EvaluationService {
     }
 
     /**
-     * 获取评估状态文本
+     * 获取评估状态文本（从 project.status 派生，不再使用 evaluation.evaluationStatus）
      */
     private String getEvaluationStatusText(String status) {
         if (status == null) {
             return "";
         }
-        return switch (status) {
-            case EVAL_STATUS_DRAFT -> "草稿";
-            case EVAL_STATUS_IN_PROGRESS -> "进行中";
-            case EVAL_STATUS_COMPLETED -> "已完成";
-            default -> "未知";
-        };
+        try {
+            return com.migrametric.entity.project.ProjectStatus.fromCode(status).getText();
+        } catch (IllegalArgumentException e) {
+            return "未知";
+        }
     }
 
     /**
@@ -166,7 +162,6 @@ public class EvaluationServiceImpl implements EvaluationService {
         // 创建评估记录
         Evaluation evaluation = new Evaluation();
         evaluation.setProjectId(dto.getProjectId());
-        evaluation.setEvaluationStatus(EVAL_STATUS_DRAFT);
         evaluationMapper.insert(evaluation);
 
         // 同步推进项目状态：DRAFT → IN_PROGRESS（走状态机，P1 修复）
@@ -210,13 +205,11 @@ public class EvaluationServiceImpl implements EvaluationService {
         evaluation.setDataCleanDesc(dto.getDataCleanDesc());
         evaluation.setDataCleanComplexity(dto.getDataCleanComplexity());
 
-        // 如果评估不存在，设置为进行中状态
+        // 如果评估不存在，写入记录（状态由 project.status 管理）
         if (evaluation.getId() == null) {
-            evaluation.setEvaluationStatus(EVAL_STATUS_IN_PROGRESS);
             evaluationMapper.insert(evaluation);
             log.info("创建评估记录并保存指标, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
         } else {
-            evaluation.setEvaluationStatus(EVAL_STATUS_IN_PROGRESS);
             evaluationMapper.updateById(evaluation);
             log.info("更新评估指标, projectId: {}, evaluationId: {}", projectId, evaluation.getId());
         }
@@ -242,8 +235,7 @@ public class EvaluationServiceImpl implements EvaluationService {
             throw new BusinessException(ResultCode.VALIDATION_ERROR, "请先计算工作量");
         }
 
-        // 更新评估状态为已完成
-        evaluation.setEvaluationStatus(EVAL_STATUS_COMPLETED);
+        // 更新评估完成时间（状态由 project.status 管理）
         evaluation.setEvaluationTime(LocalDateTime.now());
         evaluation.setUpdateTime(LocalDateTime.now());
         evaluationMapper.updateById(evaluation);

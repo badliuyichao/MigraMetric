@@ -120,12 +120,6 @@ public class Evaluation implements Serializable {
     private BigDecimal totalWorkload;
 
     /**
-     * 评估状态：DRAFT-草稿，IN_PROGRESS-进行中，COMPLETED-已完成
-     */
-    @Schema(description = "评估状态")
-    private String evaluationStatus;
-
-    /**
      * 评估完成时间
      */
     @Schema(description = "评估完成时间")

@@ -190,7 +190,7 @@ public class ExcelExportServiceImpl implements ExcelExportService {
 
         // 评估状态
         rowNum++;
-        createLabelValueRow(sheet, rowNum++, "评估状态", evaluation.getEvaluationStatus());
+        createLabelValueRow(sheet, rowNum++, "评估状态", project != null ? project.getStatus() : "");
         createLabelValueRow(sheet, rowNum++, "总工作量", formatWorkload(evaluation.getTotalWorkload()) + " 人天");
         createLabelValueRow(sheet, rowNum++, "预估工期", formatEstimatedMonths(evaluation.getTotalWorkload()) + " 人月");
     }

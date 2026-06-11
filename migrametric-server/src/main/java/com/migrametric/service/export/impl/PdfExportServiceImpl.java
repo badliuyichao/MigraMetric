@@ -157,7 +157,7 @@ public class PdfExportServiceImpl implements PdfExportService {
         addLabelValueCell(table, "评估日期", project.getEvaluationDate() != null ? project.getEvaluationDate().toString() : "-");
         addLabelValueCell(table, "源系统", "系统" + project.getSourceSystemId());
         addLabelValueCell(table, "目标系统", "系统" + project.getTargetSystemId());
-        addLabelValueCell(table, "评估状态", nvl(evaluation.getEvaluationStatus()));
+        addLabelValueCell(table, "评估状态", nvl(project != null ? project.getStatus() : ""));
         addLabelValueCell(table, "总工作量", formatWorkload(evaluation.getTotalWorkload()) + " 人天");
         addLabelValueCell(table, "预估工期", formatEstimatedMonths(evaluation.getTotalWorkload()) + " 人月");
 
