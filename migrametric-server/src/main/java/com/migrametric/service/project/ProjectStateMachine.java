@@ -4,7 +4,9 @@ import com.migrametric.common.BusinessException;
 import com.migrametric.common.ResultCode;
 import com.migrametric.entity.project.Project;
 import com.migrametric.entity.project.ProjectStatus;
+import com.migrametric.entity.project.ProjectStatusHistory;
 import com.migrametric.mapper.project.ProjectMapper;
+import com.migrametric.mapper.project.ProjectStatusHistoryMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -36,6 +38,7 @@ import java.util.Set;
 public class ProjectStateMachine {
 
     private final ProjectMapper projectMapper;
+    private final ProjectStatusHistoryMapper projectStatusHistoryMapper;
 
     /** DRAFT 合法事件 */
     private static final Set<ProjectEvent> FROM_DRAFT =
@@ -84,9 +87,28 @@ public class ProjectStateMachine {
         project.setStatus(next.getCode());
         project.setUpdateTime(LocalDateTime.now());
         projectMapper.updateById(project);
+        // 同一事务内追加历史（BUG-§3.2.4 REQ）
+        recordHistory(project, current, next, event, false);
         log.info("项目状态流转: projectId={}, {} -> {} (event={})",
                 projectId, current.getCode(), next.getCode(), event);
         return next;
+    }
+
+    /**
+     * 写历史行（由 service 层与 state machine 共用）
+     */
+    public void recordHistory(Project project, ProjectStatus from, ProjectStatus to,
+                              ProjectEvent event, boolean manualEdit) {
+        ProjectStatusHistory h = new ProjectStatusHistory();
+        h.setProjectId(project.getId());
+        h.setFromStatus(from == null ? null : from.getCode());
+        h.setToStatus(to.getCode());
+        h.setEvent(event.name());
+        h.setOperator(com.migrametric.context.UserContext.getCurrentUsername());
+        h.setReason(null);
+        h.setChangeTime(LocalDateTime.now());
+        h.setManualEdit(manualEdit ? 1 : 0);
+        projectStatusHistoryMapper.insert(h);
     }
 
     private ProjectStatus parseStatus(String code) {

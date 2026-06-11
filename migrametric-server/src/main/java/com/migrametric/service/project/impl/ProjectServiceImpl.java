@@ -102,6 +102,9 @@ public class ProjectServiceImpl implements ProjectService {
         project.setCreateBy(UserContext.getCurrentUsername());
 
         projectMapper.insert(project);
+        // 写首条 CREATE 历史（§3.2.4）
+        projectStateMachine.recordHistory(project, null, com.migrametric.entity.project.ProjectStatus.DRAFT,
+                com.migrametric.service.project.ProjectEvent.CREATE, false);
         log.info("创建项目成功: id={}, name={}", project.getId(), project.getProjectName());
 
         return project.getId();
