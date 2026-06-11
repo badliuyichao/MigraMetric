@@ -155,14 +155,153 @@
           <el-button type="primary" @click="handleStartEvaluation">开始评估</el-button>
         </el-empty>
       </el-card>
+
+      <!-- 状态历史卡片（REQ-§3.2.4） -->
+      <el-card class="mt-20" data-testid="card-status-history">
+        <template #header>
+          <div class="card-header">
+            <span>状态变更历史</span>
+            <el-button
+              v-if="isAdmin"
+              type="primary"
+              link
+              data-testid="btn-manual-create-history"
+              @click="openManualDialog"
+            >
+              补录历史
+            </el-button>
+          </div>
+        </template>
+
+        <!-- 过滤栏 -->
+        <el-row :gutter="16" class="mb-16">
+          <el-col :span="8">
+            <el-input
+              v-model="historyFilter.operator"
+              placeholder="按操作人过滤"
+              clearable
+              data-testid="filter-operator"
+              @change="loadStatusHistory(1)"
+            />
+          </el-col>
+          <el-col :span="8">
+            <el-select
+              v-model="historyFilter.event"
+              placeholder="按事件过滤"
+              clearable
+              data-testid="filter-event"
+              style="width: 100%"
+              @change="loadStatusHistory(1)"
+            >
+              <el-option label="CREATE" value="CREATE" />
+              <el-option label="EVAL_START" value="EVAL_START" />
+              <el-option label="EVAL_COMPLETE" value="EVAL_COMPLETE" />
+              <el-option label="ARCHIVE" value="ARCHIVE" />
+              <el-option label="MANUAL_EDIT" value="MANUAL_EDIT" />
+            </el-select>
+          </el-col>
+        </el-row>
+
+        <!-- 时间线 -->
+        <el-empty
+          v-if="!historyLoading && historyList.length === 0"
+          description="暂无状态变更"
+        />
+        <el-timeline v-else v-loading="historyLoading" data-testid="timeline-status-history">
+          <el-timeline-item
+            v-for="h in historyList"
+            :key="h.id"
+            :timestamp="h.changeTime"
+            :type="getStatusColor(h.toStatus)"
+            :hollow="!h.manualEdit"
+            placement="top"
+          >
+            <el-card shadow="never" :data-testid="'history-item-' + h.event">
+              <div class="history-row">
+                <span class="history-event">
+                  <el-tag :type="getEventColor(h.event)" effect="plain">{{ h.event }}</el-tag>
+                  <el-tag v-if="h.manualEdit" type="warning" effect="plain" class="ml-8">手动补录</el-tag>
+                </span>
+                <span class="history-transition">
+                  <el-tag v-if="h.fromStatus" :type="getStatusColor(h.fromStatus)">{{ h.fromStatus }}</el-tag>
+                  <span v-if="h.fromStatus"> → </span>
+                  <el-tag :type="getStatusColor(h.toStatus)">{{ h.toStatus }}</el-tag>
+                </span>
+              </div>
+              <div class="history-meta">
+                <span>操作人：<strong>{{ h.operator }}</strong></span>
+                <span v-if="h.reason" class="ml-16">备注：{{ h.reason }}</span>
+              </div>
+            </el-card>
+          </el-timeline-item>
+        </el-timeline>
+
+        <!-- 分页 -->
+        <el-pagination
+          v-if="historyTotal > historyPageSize"
+          v-model:current-page="historyPageNum"
+          v-model:page-size="historyPageSize"
+          :total="historyTotal"
+          layout="prev, pager, next"
+          small
+          @current-change="loadStatusHistory"
+        />
+      </el-card>
     </template>
+
+    <!-- 补录历史对话框（仅 ADMIN 可见） -->
+    <el-dialog
+      v-model="manualDialogVisible"
+      title="补录状态历史"
+      width="500px"
+      data-testid="dialog-manual-create"
+    >
+      <el-form ref="manualFormRef" :model="manualForm" :rules="manualRules" label-width="100px">
+        <el-form-item label="变更前" prop="fromStatus">
+          <el-select v-model="manualForm.fromStatus" placeholder="请选择" data-testid="manual-from-status">
+            <el-option label="草稿" value="DRAFT" />
+            <el-option label="进行中" value="IN_PROGRESS" />
+            <el-option label="已完成" value="COMPLETED" />
+            <el-option label="已归档" value="ARCHIVED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="变更后" prop="toStatus">
+          <el-select v-model="manualForm.toStatus" placeholder="请选择" data-testid="manual-to-status">
+            <el-option label="草稿" value="DRAFT" />
+            <el-option label="进行中" value="IN_PROGRESS" />
+            <el-option label="已完成" value="COMPLETED" />
+            <el-option label="已归档" value="ARCHIVED" />
+          </el-select>
+        </el-form-item>
+        <el-form-item label="事件">
+          <el-input v-model="manualForm.event" disabled />
+        </el-form-item>
+        <el-form-item label="变更时间" prop="changeTime">
+          <el-date-picker
+            v-model="manualForm.changeTime"
+            type="datetime"
+            value-format="YYYY-MM-DDTHH:mm:ss"
+            placeholder="选择时间"
+            style="width: 100%"
+            data-testid="manual-change-time"
+          />
+        </el-form-item>
+        <el-form-item label="备注">
+          <el-input v-model="manualForm.reason" type="textarea" data-testid="manual-reason" />
+        </el-form-item>
+      </el-form>
+      <template #footer>
+        <el-button @click="manualDialogVisible = false">取消</el-button>
+        <el-button type="primary" :loading="manualSaving" data-testid="btn-submit-manual" @click="submitManual">提交</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
-import { ElMessage, ElMessageBox } from 'element-plus'
+import { ElMessage, ElMessageBox, type FormInstance, type FormRules } from 'element-plus'
 import {
   getProjectDetail,
   deleteProject,
@@ -171,9 +310,17 @@ import {
   type ProjectDetailVO,
   type ProjectStatus
 } from '@/api/project/projects'
+import {
+  listStatusHistory,
+  manualCreateStatusHistory,
+  type StatusHistoryVO,
+  type StatusHistoryCreateDTO
+} from '@/api/project/status-history'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const route = useRoute()
+const userStore = useUserStore()
 const loading = ref(false)
 
 // 项目详情数据
@@ -240,9 +387,10 @@ function getEvaluationStatusType(status: string | null): 'success' | 'primary' |
 /**
  * 加载项目详情
  */
+const projectId = computed(() => Number(route.params.id) || 0)
+
 async function loadProjectDetail() {
-  const projectId = Number(route.params.id)
-  if (!projectId) {
+  if (!projectId.value) {
     ElMessage.error('项目ID无效')
     router.push('/project/list')
     return
@@ -250,7 +398,7 @@ async function loadProjectDetail() {
 
   loading.value = true
   try {
-    const detail = await getProjectDetail(projectId)
+    const detail = await getProjectDetail(projectId.value)
     Object.assign(projectInfo, detail)
   } catch {
     ElMessage.error('加载项目详情失败')
@@ -358,7 +506,110 @@ async function handleDelete() {
 
 onMounted(() => {
   loadProjectDetail()
+  if (projectId.value) loadStatusHistory(1)
 })
+
+// ============== 状态历史（§3.2.4） ==============
+const historyList = ref<StatusHistoryVO[]>([])
+const historyTotal = ref(0)
+const historyPageNum = ref(1)
+const historyPageSize = ref(10)
+const historyLoading = ref(false)
+const historyFilter = reactive({
+  operator: '',
+  event: ''
+})
+const isAdmin = computed(() => userStore.isAdmin)
+
+function getStatusColor(status: string | null): 'success' | 'primary' | 'warning' | 'info' | 'danger' {
+  if (status === 'DRAFT') return 'info'
+  if (status === 'IN_PROGRESS') return 'warning'
+  if (status === 'COMPLETED') return 'success'
+  if (status === 'ARCHIVED') return 'info'
+  return 'info'
+}
+
+function getEventColor(event: string): 'success' | 'primary' | 'warning' | 'info' | 'danger' {
+  if (event === 'CREATE') return 'info'
+  if (event === 'EVAL_START') return 'warning'
+  if (event === 'EVAL_COMPLETE') return 'success'
+  if (event === 'ARCHIVE') return 'primary'
+  if (event === 'MANUAL_EDIT') return 'danger'
+  return 'info'
+}
+
+async function loadStatusHistory(pageNum?: number) {
+  if (!projectId.value) return
+  if (pageNum) historyPageNum.value = pageNum
+  historyLoading.value = true
+  try {
+    const query: Record<string, unknown> = {
+      pageNum: historyPageNum.value,
+      pageSize: historyPageSize.value
+    }
+    if (historyFilter.operator) query.operator = historyFilter.operator
+    if (historyFilter.event) query.event = historyFilter.event
+    const result = await listStatusHistory(projectId.value, query)
+    historyList.value = result.records
+    historyTotal.value = result.total
+  } catch (e) {
+    ElMessage.error('加载状态历史失败：' + (e instanceof Error ? e.message : ''))
+  } finally {
+    historyLoading.value = false
+  }
+}
+
+// ============== 补录对话框（仅 ADMIN） ==============
+const manualDialogVisible = ref(false)
+const manualSaving = ref(false)
+const manualFormRef = ref<FormInstance>()
+const manualForm = reactive<StatusHistoryCreateDTO>({
+  fromStatus: '',
+  toStatus: '',
+  event: 'MANUAL_EDIT',
+  reason: '',
+  changeTime: '' as unknown as string
+})
+const manualRules: FormRules = {
+  fromStatus: [{ required: true, message: '请选择变更前状态', trigger: 'change' }],
+  toStatus: [{ required: true, message: '请选择变更后状态', trigger: 'change' }],
+  changeTime: [{ required: true, message: '请选择变更时间', trigger: 'change' }]
+}
+
+function openManualDialog() {
+  manualForm.fromStatus = ''
+  manualForm.toStatus = ''
+  manualForm.reason = ''
+  manualForm.changeTime = new Date().toISOString().slice(0, 19) as unknown as string
+  manualDialogVisible.value = true
+}
+
+async function submitManual() {
+  if (!manualFormRef.value) return
+  try {
+    await manualFormRef.value.validate()
+  } catch {
+    return
+  }
+  if (manualForm.fromStatus === manualForm.toStatus) {
+    ElMessage.error('fromStatus 与 toStatus 不能相同')
+    return
+  }
+  manualSaving.value = true
+  try {
+    await manualCreateStatusHistory(projectId.value, {
+      ...manualForm,
+      changeTime: manualForm.changeTime as unknown as string
+    })
+    ElMessage.success('补录成功')
+    manualDialogVisible.value = false
+    loadStatusHistory(1)
+  } catch (e) {
+    ElMessage.error('补录失败：' + (e instanceof Error ? e.message : ''))
+  } finally {
+    manualSaving.value = false
+  }
+}
 </script>
 
 <style lang="scss" scoped>
@@ -399,4 +650,16 @@ onMounted(() => {
 .mt-20 {
   margin-top: 20px;
 }
+.ml-8 { margin-left: 8px; }
+.ml-16 { margin-left: 16px; }
+.mb-16 { margin-bottom: 16px; }
+.history-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 8px;
+}
+.history-event { display: flex; align-items: center; }
+.history-transition { display: flex; align-items: center; gap: 4px; }
+.history-meta { font-size: 13px; color: #606266; }
 </style>

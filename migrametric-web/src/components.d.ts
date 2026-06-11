@@ -50,6 +50,8 @@ declare module 'vue' {
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElTimeline: typeof import('element-plus/es')['ElTimeline']
+    ElTimelineItem: typeof import('element-plus/es')['ElTimelineItem']
     EmptyState: typeof import('./components/common/EmptyState.vue')['default']
     EnhancedPagination: typeof import('./components/common/EnhancedPagination.vue')['default']
     ErrorState: typeof import('./components/common/ErrorState.vue')['default']
