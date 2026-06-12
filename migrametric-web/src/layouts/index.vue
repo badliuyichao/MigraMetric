@@ -156,10 +156,10 @@ async function handleCommand(command: string) {
       router.push('/login')
       break
     case 'profile':
-      ElMessage.info('功能开发中')
+      router.push('/user')
       break
     case 'password':
-      ElMessage.info('功能开发中')
+      ElMessage.info('修改密码功能开发中（需后端新增接口）')
       break
   }
 }

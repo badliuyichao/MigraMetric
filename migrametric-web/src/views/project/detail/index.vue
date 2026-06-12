@@ -295,6 +295,14 @@
         <el-button type="primary" :loading="manualSaving" data-testid="btn-submit-manual" @click="submitManual">提交</el-button>
       </template>
     </el-dialog>
+
+    <!-- 导出报告弹窗 -->
+    <ExportDialog
+      v-model="exportDialogVisible"
+      :project-id="Number(route.params.id)"
+      :project-name="projectInfo.projectName"
+      :customer-name="projectInfo.customerName"
+    />
   </div>
 </template>
 
@@ -317,11 +325,13 @@ import {
   type StatusHistoryCreateDTO
 } from '@/api/project/status-history'
 import { useUserStore } from '@/stores/user'
+import ExportDialog from '@/components/export/ExportDialog.vue'
 
 const router = useRouter()
 const route = useRoute()
 const userStore = useUserStore()
 const loading = ref(false)
+const exportDialogVisible = ref(false)
 
 // 项目详情数据
 const projectInfo = reactive<ProjectDetailVO>({
@@ -440,7 +450,7 @@ function handleViewReport() {
  * 导出报告
  */
 function handleExport() {
-  ElMessage.info('导出功能开发中')
+  exportDialogVisible.value = true
 }
 
 /**

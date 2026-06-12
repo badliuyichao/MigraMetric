@@ -27,6 +27,18 @@
             <el-option label="已归档" value="ARCHIVED" />
           </el-select>
         </el-form-item>
+        <el-form-item label="评估日期">
+          <el-date-picker
+            v-model="searchForm.dateRange"
+            type="daterange"
+            range-separator="至"
+            start-placeholder="开始日期"
+            end-placeholder="结束日期"
+            value-format="YYYY-MM-DD"
+            data-testid="search-date-range"
+            style="width: 260px"
+          />
+        </el-form-item>
         <el-form-item>
           <el-button type="primary" data-testid="btn-search" @click="handleSearch">查询</el-button>
           <el-button data-testid="btn-reset" @click="handleReset">重置</el-button>
@@ -107,7 +119,8 @@ const loading = ref(false)
 const searchForm = reactive({
   projectName: '',
   customerName: '',
-  status: ''
+  status: '',
+  dateRange: null as [string, string] | null
 })
 
 // 分页配置
@@ -140,7 +153,9 @@ async function loadData() {
       pageSize: pagination.pageSize,
       projectName: searchForm.projectName || undefined,
       customerName: searchForm.customerName || undefined,
-      status: searchForm.status as ProjectQuery['status'] || undefined
+      status: searchForm.status as ProjectQuery['status'] || undefined,
+      evaluationDateFrom: searchForm.dateRange?.[0] || undefined,
+      evaluationDateTo: searchForm.dateRange?.[1] || undefined
     }
     const res = await queryProjectPage(params)
     tableData.value = res.records

@@ -125,11 +125,13 @@ async function handleExport() {
         fileName = `${safeCustomer}_${safeProject}_工作量评估报告_${date}.xlsx`
         break
       case 'PDF':
-        ElMessage.info('PDF导出功能开发中')
-        return
+        blob = await exportToPdf(props.projectId, sections) as unknown as Blob
+        fileName = `${safeCustomer}_${safeProject}_工作量评估报告_${date}.pdf`
+        break
       case 'WORD':
-        ElMessage.info('Word导出功能开发中')
-        return
+        blob = await exportToWord(props.projectId, sections) as unknown as Blob
+        fileName = `${safeCustomer}_${safeProject}_工作量评估报告_${date}.docx`
+        break
       default:
         ElMessage.error('不支持的导出格式')
         return

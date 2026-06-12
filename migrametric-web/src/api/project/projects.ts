@@ -52,6 +52,8 @@ export interface ProjectQuery {
   sourceSystemId?: number
   targetSystemId?: number
   status?: ProjectStatus
+  evaluationDateFrom?: string
+  evaluationDateTo?: string
 }
 
 /**
