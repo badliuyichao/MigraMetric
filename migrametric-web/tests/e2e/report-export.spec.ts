@@ -199,4 +199,33 @@ test.describe('报表导出 E2E', () => {
     expect(body.length, 'Word 文件不应为空').toBeGreaterThan(0)
     await shot(page, '05-export-word-success', __specDir)
   })
+
+  test('RPT-006: 详情页导出按钮打开 ExportDialog', async ({ page }) => {
+    test.setTimeout(60000)
+    await loginAs(page, 'admin')
+    const name = `RPT-DLG-${UNIQUE()}`
+    const projectId = await createCompletedProject(page, name)
+
+    await page.goto(`/project/detail/${projectId}`)
+    await page.waitForLoadState('networkidle')
+
+    // 点击导出报告按钮
+    const exportBtn = page.locator('button', { hasText: '导出报告' }).first()
+    await expect(exportBtn).toBeVisible()
+    await exportBtn.click()
+
+    // 验证 ExportDialog 弹窗出现
+    const dialog = page.locator('.el-dialog').filter({ hasText: '导出评估报告' })
+    await expect(dialog).toBeVisible({ timeout: 5000 })
+
+    // 验证三种格式选项存在
+    await expect(dialog.getByText('Excel (.xlsx)')).toBeVisible()
+    await expect(dialog.getByText('PDF (.pdf)')).toBeVisible()
+    await expect(dialog.getByText('Word (.docx)')).toBeVisible()
+    await shot(page, '06-export-dialog-opened', __specDir)
+
+    // 关闭弹窗
+    await dialog.locator('button', { hasText: '取消' }).click()
+    await expect(dialog).toBeHidden()
+  })
 })

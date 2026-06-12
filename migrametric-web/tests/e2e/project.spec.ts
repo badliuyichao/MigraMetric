@@ -330,4 +330,45 @@ test.describe('第三阶段·项目管理 E2E', () => {
     await expect(page.locator('.el-form-item__error').first()).toBeVisible({ timeout: 5000 })
     await shot(page, '08-form-validation-error', __specDir)
   })
+
+  // ===========================================================
+  // §3.2.2 项目列表日期范围筛选
+  // ===========================================================
+
+  test('PRJ-009: 项目列表按评估日期范围筛选', async ({ page }) => {
+    await loginAs(page, 'admin')
+    // 先创建一个带特定日期的项目
+    const name = `DATE-FILTER-${UNIQUE()}`
+    await createDraftProject(page, name)
+
+    await page.goto('/project/list')
+    await expect(page.locator('[data-testid="table-project"]')).toBeVisible()
+
+    // 使用日期范围筛选（包含今天）
+    const startInput = page.locator('input[placeholder="开始日期"]')
+    await expect(startInput).toBeVisible({ timeout: 5000 })
+
+    // 输入开始日期
+    await startInput.click()
+    await startInput.fill('2026-06-01')
+    await startInput.press('Enter')
+    await page.waitForTimeout(300)
+
+    // 输入结束日期
+    const endInput = page.locator('input[placeholder="结束日期"]')
+    await endInput.click()
+    await endInput.fill('2026-12-31')
+    await endInput.press('Enter')
+    await page.waitForTimeout(300)
+
+    // 点击页面其他地方关闭日期面板
+    await page.locator('[data-testid="btn-search"]').click()
+    await page.waitForTimeout(500)
+
+    // 验证：搜索结果应包含刚创建的项目
+    const rows = page.locator('[data-testid="table-project"] .el-table__row')
+    const count = await rows.count()
+    expect(count, '日期范围内应有项目').toBeGreaterThanOrEqual(1)
+    await shot(page, '09-list-date-range-filter', __specDir)
+  })
 })
