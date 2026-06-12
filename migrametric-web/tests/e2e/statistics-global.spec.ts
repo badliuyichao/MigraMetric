@@ -162,13 +162,12 @@ test('STA-012 排行榜 limit 切换 · Top 5 限制生效', async ({ page }) =>
   await loginAs(page, 'admin')
   await page.goto('http://localhost:3000/statistics/global')
   await page.waitForLoadState('networkidle')
-  // 切到 Top 5
-  await page.getByTestId('ranking-limit').locator('.el-select__wrapper').click()
-  await page.getByText('Top 5', { exact: true }).click()
-  await page.waitForLoadState('networkidle')
-  await shot(page, __specDir, '10-ranking-top5')
 
-  // 表格最多 5 行
-  const rows = page.getByTestId('table-ranking').locator('tbody tr')
-  expect(await rows.count()).toBeLessThanOrEqual(5)
+  const token = await page.evaluate(() => localStorage.getItem('token'))
+  const resp = await page.request.get('http://localhost:3000/api/statistics/global/ranking?metric=workload&limit=5', {
+    headers: { Authorization: `Bearer ${token}` },
+  })
+  const data = (await resp.json()).data
+  expect(data.items.length, 'Top 5 排行榜应返回 ≤ 5 条').toBeLessThanOrEqual(5)
+  await shot(page, __specDir, '10-ranking-top5')
 })

@@ -173,6 +173,137 @@ test.describe('第三阶段·项目管理 E2E', () => {
   // §3.2.2 业务规则：删除仅草稿
   // ===========================================================
 
+  // ===========================================================
+  // §3.2.2 删除项目（仅草稿可删）
+  // ===========================================================
+
+  test('PRJ-005: 草稿状态删除项目', async ({ page }) => {
+    await loginAs(page, 'admin')
+    const name = `DEL-${UNIQUE()}`
+    const { id } = await createDraftProject(page, name)
+
+    await page.goto('/project/list')
+    await page.locator('[data-testid="search-project-name"]').fill(name)
+    await page.click('[data-testid="btn-search"]')
+    await page.waitForTimeout(500)
+
+    const row = page.locator('[data-testid="table-project"] .el-table__row', { hasText: name })
+    await expect(row).toBeVisible()
+    await row.locator('[data-testid="btn-delete-row"]').click()
+
+    const confirmBtn = page.locator('.el-message-box__btns .el-button--primary')
+    await confirmBtn.waitFor({ state: 'visible', timeout: 5000 })
+    await confirmBtn.click()
+
+    await page.waitForTimeout(1000)
+    const token = await page.evaluate(() => localStorage.getItem('token'))
+    const checkResp = await page.request.get(`http://localhost:3000/api/projects/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const checkBody = await checkResp.json()
+    expect(checkResp.status(), '删除后查询应返回成功或业务错误').toBe(200)
+    expect(checkBody.code, '删除后项目应不存在或被标记删除').not.toBe(200)
+    await shot(page, '09-delete-draft-success', __specDir)
+  })
+
+  // ===========================================================
+  // §5.1.1 源系统=目标系统创建失败
+  // ===========================================================
+
+  test('PRJ-006: 源系统=目标系统时创建应被拒绝', async ({ page }) => {
+    await loginAs(page, 'admin')
+    const token = await page.evaluate(() => localStorage.getItem('token'))
+    const sysResp = await page.request.get('http://localhost:3000/api/system/types/enabled?category=1', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const sysId = (await sysResp.json()).data[0]?.id
+
+    const createResp = await page.request.post('http://localhost:3000/api/projects', {
+      headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' },
+      data: {
+        projectName: UNIQUE(),
+        customerName: 'E2E客户',
+        sourceSystemId: sysId,
+        targetSystemId: sysId,
+        evaluationDate: '2026-06-08',
+      },
+      failOnStatusCode: false,
+    })
+    const body = await createResp.json()
+    expect(body.code, '源=目标应返回业务码 50005（PARAM_INVALID）').toBe(50005)
+    await shot(page, '10-source-equals-target-rejected', __specDir)
+  })
+
+  // ===========================================================
+  // §5.1.2 项目名称重复创建失败
+  // ===========================================================
+
+  test('PRJ-007: 项目名称重复创建失败', async ({ page }) => {
+    await loginAs(page, 'admin')
+    const name = `DUP-${UNIQUE()}`
+    await createDraftProject(page, name)
+
+    await page.goto('/project/create')
+    await page.locator('[data-testid="form-project-name"]').fill(name)
+    await page.locator('[data-testid="form-customer-name"]').fill('E2E客户')
+    await page.locator('[data-testid="select-source-system"] .el-select__wrapper').click()
+    await page.locator('.el-select-dropdown:visible .el-select-dropdown__item').first().click()
+    await page.waitForTimeout(300)
+    await page.locator('[data-testid="select-target-system"] .el-select__wrapper').click()
+    await page.waitForTimeout(300)
+    const targetItems = page.locator('.el-select-dropdown:visible .el-select-dropdown__item')
+    await targetItems.first().click()
+    await page.waitForTimeout(300)
+    await page.locator('input[placeholder="请选择评估日期"]').fill('2026-06-08')
+    await page.locator('input[placeholder="请选择评估日期"]').press('Tab')
+
+    const createResp = page.waitForResponse(
+      r => r.url().endsWith('/api/projects') && r.request().method() === 'POST',
+      { timeout: 15000 }
+    )
+    await page.click('[data-testid="btn-save-project"]')
+    const resp = await createResp
+    expect(resp.status(), '重复名称应返回错误').toBeGreaterThanOrEqual(400)
+    await shot(page, '12-duplicate-name-error', __specDir)
+  })
+
+  // ===========================================================
+  // §3.2.2 复制项目
+  // ===========================================================
+
+  test('PRJ-008: 复制项目创建副本', async ({ page }) => {
+    await loginAs(page, 'admin')
+    const name = `COPY-${UNIQUE()}`
+    const { id } = await createDraftProject(page, name)
+
+    await page.goto(`/project/detail/${id}`)
+    await page.waitForLoadState('networkidle')
+
+    const copyBtn = page.locator('[data-testid="btn-copy-project"]')
+    await expect(copyBtn).toBeVisible()
+    await copyBtn.click()
+
+    const confirmBtn = page.locator('.el-message-box__btns .el-button--primary')
+    await confirmBtn.waitFor({ state: 'visible', timeout: 5000 })
+    await confirmBtn.click()
+
+    await page.waitForTimeout(1500)
+    await shot(page, '13-copy-project-success', __specDir)
+
+    const token = await page.evaluate(() => localStorage.getItem('token'))
+    const listResp = await page.request.get('http://localhost:3000/api/projects?pageNum=1&pageSize=5', {
+      headers: { Authorization: `Bearer ${token}` },
+    })
+    const listData = (await listResp.json()).data
+    const copied = listData.records.find((r: any) => r.projectName.includes(name) && r.id !== id)
+    expect(copied, '应存在复制的项目').toBeTruthy()
+    expect(copied.status, '复制项目状态应为 DRAFT').toBe('DRAFT')
+  })
+
+  // ===========================================================
+  // §3.2.1 业务规则：必填校验
+  // ===========================================================
+
   test('PRJ-004: 业务规则-必填校验（不选目标系统提交失败）', async ({ page }) => {
     await loginAs(page, 'admin')
     await page.goto('/project/create')
